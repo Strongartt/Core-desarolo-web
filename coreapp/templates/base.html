@@ -5,25 +5,27 @@
   <title>{% block title %}Mi Core MVC{% endblock %}</title>
   <style>
     body { font-family: sans-serif; margin: 2rem; }
-    nav a, nav form { margin-right: 1rem; display: inline; }
+    nav a { margin-right: 1rem; }
     .content { margin-top: 1rem; }
   </style>
 </head>
 <body>
   <header>
     <nav>
-      {% if user.is_authenticated %}
-        <a href="{% url 'usuario_list' %}">Usuarios</a>
-        <a href="{% url 'curso_list' %}">Cursos</a>
-        <a href="{% url 'inscripcion_list' %}">Inscripciones</a>
-        <form action="{% url 'logout' %}" method="post" style="display:inline;">
-          {% csrf_token %}
-          <button type="submit">Salir</button>
-        </form>
-        <a href="{% url 'admin:index' %}">Admin</a>
+      {# Si NO estás autenticado, sólo muestro “Iniciar sesión” #}
+      {% if not user.is_authenticated %}
+        <a href="{% url 'login' %}">Iniciar sesión</a>
       {% else %}
-        <a href="{% url 'login' %}">Iniciar Sesión</a>
-        <a href="{% url 'admin:index' %}">Admin</a>
+        {# Si eres superuser, dejo enlace al /admin/ #}
+        {% if user.is_superuser %}
+          <a href="{% url 'admin:index' %}">Admin</a>
+        {% endif %}
+
+        {# Menú de la aplicación sólo para usuarios logueados #}
+        <a href="{% url 'usuario_list' %}">Usuarios</a>
+        <a href="{% url 'curso_list'   %}">Cursos</a>
+        <a href="{% url 'inscripcion_list' %}">Inscripciones</a>
+        <a href="{% url 'logout' %}">Salir</a>
       {% endif %}
     </nav>
     <hr>
@@ -34,3 +36,4 @@
   </main>
 </body>
 </html>
+<!-- Compare this snippet from coreapp/templates/gestion/curso_list.html: -->
