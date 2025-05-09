@@ -8,4 +8,7 @@
     {{ form.as_p }}
     <button type="submit">Entrar</button>
   </form>
+
+  <p>¿No tienes cuenta? <a href="{% url 'signup' %}">Crear nuevo usuario</a></p>
+  <p><a href="{% url 'admin:login' %}">Admin</a></p>
 {% endblock %}

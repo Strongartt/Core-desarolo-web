@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Listado de Inscripciones{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'logout' %}">Salir</a></p>
+
+  <h1>Inscripciones</h1>
+  {% if user.is_superuser %}
+    <p><a href="{% url 'inscripcion_new' %}">+ Crear Nueva Inscripción</a></p>
+  {% endif %}
+
+  <table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Curso</th>
+        <th>Fecha inscripción</th>
+        <th>Estado</th>
+        {% if user.is_superuser %}
+          <th>Acciones</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in inscripciones %}
+        <tr>
+          <td>{{ i.usuario }}</td>
+          <td>{{ i.curso }}</td>
+          <td>{{ i.fecha_inscripcion }}</td>
+          <td>{{ i.estado }}</td>
+          {% if user.is_superuser %}
+            <td>
+              <a href="{% url 'inscripcion_edit' i.pk %}">Editar</a>
+            </td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">No hay inscripciones registradas.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

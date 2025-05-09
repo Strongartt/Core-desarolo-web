@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Mis Cursos (Estudiante){% endblock %}
+{% block content %}
+  <h1>Mis Cursos - Estudiante</h1>
+  <p>Listado de los cursos en los que estás inscrito y tu progreso.</p>
+  <table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Nombre del Curso</th>
+        <th>Fecha de Inscripción</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inscripcion in inscripciones_estudiante %}
+        <tr>
+          <td>{{ inscripcion.curso.nombre }}</td>
+          <td>{{ inscripcion.fecha_inscripcion }}</td>
+          <td>{{ inscripcion.estado }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">No estás inscrito en ningún curso.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

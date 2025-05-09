@@ -1,0 +1,13 @@
+{# templates/gestion/inscripcion_form.html #}
+{% extends "base.html" %}
+{% block title %}{% if object %}Editar Inscripción{% else %}Nueva Inscripción{% endif %}{% endblock %}
+
+{% block content %}
+  <h1>{% if object %}Editar Inscripción{% else %}Crear Nueva Inscripción{% endif %}</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar</button>
+  </form>
+  <p><a href="{% url 'inscripcion_list' %}">&larr; Volver al listado</a></p>
+{% endblock %}

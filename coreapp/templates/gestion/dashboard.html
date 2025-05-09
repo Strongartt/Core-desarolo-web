@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Panel{% endblock %}
+
+{% block content %}
+  <h1>Bienvenido, {{ user.get_full_name }}!</h1>
+
+  {% if user.is_superuser %}
+    <p>Debes usar el panel de <a href="{% url 'admin:index' %}">Administración</a>.</p>
+  {% elif user.perfil.rol.codigo == 'DOC' %}
+    <p>
+      <a href="{% url 'curso_list' %}">👩‍🏫 Gestión de Cursos</a><br>
+      <a href="{% url 'reporte_docente' %}">📊 Reporte de cursos</a>
+    </p>
+  {% else %}
+    <p>
+      <a href="{% url 'curso_list' %}">📚 Explorar Cursos</a><br>
+      <a href="{% url 'reporte_estudiante' %}">📝 Mis inscripciones</a>
+    </p>
+  {% endif %}
+{% endblock %}
