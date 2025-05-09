@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>{% block title %}Mi Core MVC{% endblock %}</title>
+  <title>{% block title %}Mi Core MVT{% endblock %}</title>
   <style>
     body { font-family: sans-serif; margin: 2rem; }
     nav a { margin-right: 1rem; }
@@ -12,19 +12,16 @@
 <body>
   <header>
     <nav>
-      {# Si NO estás autenticado, sólo muestro “Iniciar sesión” #}
       {% if not user.is_authenticated %}
         <a href="{% url 'login' %}">Iniciar sesión</a>
+        <a href="{% url 'signup' %}">Registrarse</a>
       {% else %}
-        {# Si eres superuser, dejo enlace al /admin/ #}
         {% if user.is_superuser %}
           <a href="{% url 'admin:index' %}">Admin</a>
+          <a href="{% url 'usuario_list' %}">Usuarios</a>
+          <a href="{% url 'inscripcion_list' %}">Inscripciones</a>
         {% endif %}
-
-        {# Menú de la aplicación sólo para usuarios logueados #}
-        <a href="{% url 'usuario_list' %}">Usuarios</a>
-        <a href="{% url 'curso_list'   %}">Cursos</a>
-        <a href="{% url 'inscripcion_list' %}">Inscripciones</a>
+        <a href="{% url 'curso_list' %}">Cursos</a>
         <a href="{% url 'logout' %}">Salir</a>
       {% endif %}
     </nav>
@@ -36,4 +33,3 @@
   </main>
 </body>
 </html>
-<!-- Compare this snippet from coreapp/templates/gestion/curso_list.html: -->

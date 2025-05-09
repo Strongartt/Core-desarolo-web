@@ -86,8 +86,8 @@ STATIC_URL = 'static/'
 # PK por defecto
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL           = '/accounts/login/'
-LOGIN_REDIRECT_URL  = '/usuarios/'
-LOGOUT_REDIRECT_URL = '/accounts/login/'
+LOGIN_URL = '/accounts/login/'           # dónde envía si no estás logueado
+LOGIN_REDIRECT_URL = '/usuarios/'        # tras hacer login
+LOGOUT_REDIRECT_URL = '/accounts/login/' # tras hacer logout
 
 

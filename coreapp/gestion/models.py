@@ -1,10 +1,25 @@
 from django.db import models
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 
 class Rol(models.Model):
     codigo = models.CharField(max_length=10, unique=True)
     nombre = models.CharField(max_length=50)
     def __str__(self):
         return self.nombre
+    
+    
+    
+
+class Perfil(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    rol  = models.ForeignKey(Rol, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.user.get_full_name()} ({self.rol.codigo})'
+
 
 class Usuario(models.Model):
     nombre   = models.CharField(max_length=100)
