@@ -11,7 +11,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure--xuu@yrcudj$@$_gpm&jx@!*oe&s!p$nfm0e$bbm)4guoq8s7*'
 DEBUG = True
-ALLOWED_HOSTS = ["https://core-desarolo-web.onrender.com"]
+ALLOWED_HOSTS = [
+    "127.0.0.1",            # para local
+    "localhost",            # para local
+    "core-desarolo-web.onrender.com",  # tu dominio de Render
+]
 
 # Aplicaciones instaladas
 INSTALLED_APPS = [
