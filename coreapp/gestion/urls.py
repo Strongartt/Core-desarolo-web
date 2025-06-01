@@ -13,6 +13,8 @@ from .views import (
     DashboardView,
     ReporteDocenteView,
     ReporteEstudianteView,
+    MisCursosView,
+    DetalleCursoDocenteView,
 )
 
 urlpatterns = [
@@ -39,4 +41,10 @@ urlpatterns = [
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('reporte/docente/', ReporteDocenteView.as_view(), name='reporte_docente'),
     path('reporte/estudiante/', ReporteEstudianteView.as_view(), name='reporte_estudiante'),
+    
+    path('mis-cursos/', MisCursosView.as_view(), name='mis_cursos'),
+    
+    
+    path('reporte-curso/<int:pk>/', DetalleCursoDocenteView.as_view(), name='reporte_docente_detalle'),
+
 ]

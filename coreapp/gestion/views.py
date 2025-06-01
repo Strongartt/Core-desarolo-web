@@ -9,22 +9,30 @@ from django.shortcuts import redirect
 from django.contrib.auth.views import LoginView
 from .forms import UserPerfilForm
 
-class AdminRequiredMixin(UserPassesTestMixin):
-    def test_func(self):
-        return self.request.user.is_superuser
 
-class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView):
+
+class AdministradorRolRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        user = self.request.user
+        return user.is_authenticated and hasattr(user, 'perfil') and user.perfil.rol.codigo == 'ADMIN'
+
+class AdminODocenteRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        user = self.request.user
+        return user.is_authenticated and hasattr(user, 'perfil') and user.perfil.rol.codigo in ['ADMIN', 'DOC']
+
+class UsuarioListView(LoginRequiredMixin, AdministradorRolRequiredMixin, ListView):
     model = User
     template_name = 'gestion/usuario_list.html'
     context_object_name = 'usuarios'
 
-class UsuarioCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+class UsuarioCreateView(LoginRequiredMixin, AdministradorRolRequiredMixin, CreateView):
     model = User
     form_class = UserPerfilForm
     template_name = 'gestion/usuario_form.html'
     success_url = reverse_lazy('usuario_list')
 
-class UsuarioUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+class UsuarioUpdateView(LoginRequiredMixin, AdministradorRolRequiredMixin, UpdateView):
     model = User
     form_class = UserPerfilForm
     template_name = 'gestion/usuario_form.html'
@@ -45,36 +53,58 @@ class CursoListView(LoginRequiredMixin, ListView):
     context_object_name = 'cursos'
 
 
-# Pero solo super-usuarios pueden crear o editar
-class CursoCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+class CursoCreateView(LoginRequiredMixin, AdminODocenteRequiredMixin, CreateView):
     model = Curso
     form_class = CursoForm
     template_name = 'gestion/curso_form.html'
     success_url = reverse_lazy('curso_list')
 
+    def form_valid(self, form):
+        perfil = getattr(self.request.user, 'perfil', None)
+        if perfil and perfil.rol.codigo == 'DOC':
+            form.instance.docente = perfil
+        return super().form_valid(form)
 
-class CursoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+class MisCursosView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Curso
+    template_name = 'gestion/mis_cursos.html'
+    context_object_name = 'cursos'
+
+    def test_func(self):
+        user = self.request.user
+        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOC'
+
+    def get_queryset(self):
+        return Curso.objects.filter(docente__user=self.request.user)
+
+
+class CursoUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Curso
     form_class = CursoForm
     template_name = 'gestion/curso_form.html'
-    success_url = reverse_lazy('curso_list')
+    success_url = reverse_lazy('mis_cursos')  # redirige a vista personal
+
+    def test_func(self):
+        user = self.request.user
+        perfil = getattr(user, 'perfil', None)
+        return perfil and self.get_object().docente == perfil
 
 
 # —— CRUD Inscripciones ——
-class InscripcionListView(LoginRequiredMixin, AdminRequiredMixin, ListView):
+class InscripcionListView(LoginRequiredMixin, AdministradorRolRequiredMixin, ListView):
     model = Inscripcion
     template_name = 'gestion/inscripcion_list.html'
     context_object_name = 'inscripciones'
 
 
-class InscripcionCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+class InscripcionCreateView(LoginRequiredMixin, AdministradorRolRequiredMixin, CreateView):
     model = Inscripcion
     form_class = InscripcionForm
     template_name = 'gestion/inscripcion_form.html'
     success_url = reverse_lazy('inscripcion_list')
 
 
-class InscripcionUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+class InscripcionUpdateView(LoginRequiredMixin, AdministradorRolRequiredMixin, UpdateView):
     model = Inscripcion
     form_class = InscripcionForm
     template_name = 'gestion/inscripcion_form.html'
@@ -107,16 +137,62 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
 class ReporteDocenteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'gestion/reporte_docente.html'
+
     def test_func(self):
-        u = self.request.user
-        # super‐usuario o perfil DOC
-        return u.is_superuser or (hasattr(u, 'perfil') and u.perfil.rol.codigo == 'DOC')
+        user = self.request.user
+        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOC'
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        # todos los cursos + sus inscripciones
-        ctx['cursos'] = Curso.objects.all()
-        ctx['inscripciones'] = Inscripcion.objects.select_related('usuario','curso').all()
+        perfil = self.request.user.perfil
+
+        # Solo cursos asignados al docente logueado
+        cursos_docente = Curso.objects.filter(docente=perfil)
+
+        datos = []
+        for curso in cursos_docente:
+            inscripciones = Inscripcion.objects.filter(curso=curso)
+            total = inscripciones.count()
+
+            # Calcular estado medio si hay inscripciones
+            if total > 0:
+                estados = inscripciones.values_list('estado', flat=True)
+                estado_mas_frecuente = max(set(estados), key=estados.count)
+            else:
+                estado_mas_frecuente = "Sin inscripciones"
+
+            datos.append({
+                'id': curso.id, 
+                'nombre': curso.nombre,
+                'inscritos': total,
+                'estado_medio': estado_mas_frecuente
+            })
+
+        ctx['datos'] = datos
         return ctx
+
+class DetalleCursoDocenteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'gestion/reporte_docente_detalle.html'
+
+    def test_func(self):
+        user = self.request.user
+        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOC'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        curso_id = self.kwargs['pk']
+        perfil = self.request.user.perfil
+
+        curso = Curso.objects.filter(id=curso_id, docente=perfil).first()
+        if curso:
+            inscripciones = Inscripcion.objects.filter(curso=curso).select_related('usuario')
+            ctx['curso'] = curso
+            ctx['inscripciones'] = inscripciones
+        else:
+            ctx['curso'] = None
+            ctx['inscripciones'] = []
+        return ctx
+
 
 class ReporteEstudianteView(LoginRequiredMixin, TemplateView):
     template_name = 'gestion/reporte_estudiante.html'
@@ -132,17 +208,5 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        """
-        Después del login, redirige según rol:
-          - superuser → lista de usuarios
-          - docente    → gestión de cursos
-          - estudiante  → lista de inscripciones propias
-        """
-        user = self.request.user
-        if user.is_superuser:
-            return reverse_lazy('usuario_list')
-        # asumimos que tienes un perfil con .rol.codigo
-        perfil = getattr(user, 'perfil', None)
-        if perfil and perfil.rol.codigo == 'DOC':
-            return reverse_lazy('curso_list')
-        return reverse_lazy('inscripcion_list')
+        return reverse_lazy('dashboard') 
+

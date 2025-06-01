@@ -30,7 +30,17 @@ class CursoForm(forms.ModelForm):
         widgets = {
             'fecha_inicio': forms.DateInput(attrs={'type': 'date'}),
             'fecha_fin':    forms.DateInput(attrs={'type': 'date'}),
+            'docente':      forms.Select(),
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        fi = cleaned.get('fecha_inicio')
+        ff = cleaned.get('fecha_fin')
+        if fi and ff and ff < fi:
+            raise ValidationError("La fecha de fin no puede ser anterior a la de inicio")
+        return cleaned
+
 
     def clean(self):
         cleaned = super().clean()

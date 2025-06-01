@@ -1,26 +1,29 @@
 {% extends 'base.html' %}
 {% block title %}Reporte de Cursos (Docente){% endblock %}
 {% block content %}
-  <h1>Reporte de Cursos - Docente</h1>
-  <p>Listado de los cursos que impartes, con detalles de inscripciones y estadísticas.</p>
-  <table border="1" cellpadding="5" cellspacing="0">
-    <thead>
+<h1>Reporte de Cursos - Docente</h1>
+<p>Listado de los cursos que impartes, con detalles de inscripciones y estadísticas.</p>
+
+<table border="1" cellpadding="5" cellspacing="0">
+  <thead>
+    <tr>
+      <th>Nombre del Curso</th>
+      <th>Inscritos</th>
+      <th>Estado Medio</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for curso in datos %}
       <tr>
-        <th>Nombre del Curso</th>
-        <th>Inscritos</th>
-        <th>Estado Medio</th>
+        <td>{{ curso.nombre }}</td>
+        <td>{{ curso.inscritos }}</td>
+        <td>{{ curso.estado_medio }}</td>
+        <td><a href="{% url 'reporte_docente_detalle' curso.id %}">🔍 Ver Detalle</a></td>
       </tr>
-    </thead>
-    <tbody>
-      {% for curso in cursos_docente %}
-        <tr>
-          <td>{{ curso.nombre }}</td>
-          <td>{{ curso.inscritos_count }}</td>
-          <td>{{ curso.promedio_estado }}</td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="3">No hay cursos asignados.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    {% empty %}
+      <tr><td colspan="3">No hay cursos asignados.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

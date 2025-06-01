@@ -20,35 +20,21 @@
 </head>
 <body>
   <header>
-    <nav>
-      {% if not user.is_authenticated %}
-        <a href="{% url 'login' %}">Iniciar sesión</a>
-        <a href="{% url 'signup' %}">Registrarse</a>
-      {% else %}
-        {# Super‐usuario (Admin) #}
-        {% if user.is_superuser %}
-          <a href="{% url 'admin:index' %}">Admin</a>
-          <a href="{% url 'usuario_list' %}">Usuarios</a>
-          <a href="{% url 'inscripcion_list' %}">Inscripciones</a>
+   <nav>
+  {% if user.is_authenticated %}
+    <a href="javascript:history.back()">🔙 Atrás</a>
+    <a href="{% url 'dashboard' %}">🏠 Inicio</a>
 
-        {# Docente #}
-        {% elif user.perfil.rol.codigo == 'DOC' %}
-          <a href="{% url 'curso_list' %}">Gestión de Cursos</a>
-          <a href="{% url 'reporte_docente' %}">Reporte de Cursos</a>
-
-        {# Estudiante #}
-        {% else %}
-          <a href="{% url 'reporte_estudiante' %}">Mis Cursos</a>
-        {% endif %}
-
-        {# Botón Salir como formulario POST #}
-        <form action="{% url 'logout' %}" method="post" style="display:inline">
-          {% csrf_token %}
-          <button type="submit">Salir</button>
-        </form>
-      {% endif %}
-    </nav>
-    <hr>
+    <form action="{% url 'logout' %}" method="post" style="display:inline">
+      {% csrf_token %}
+      <button type="submit">🚪 Salir</button>
+    </form>
+  {% else %}
+    <a href="{% url 'login' %}">Iniciar sesión</a>
+    <a href="{% url 'signup' %}">Registrarse</a>
+  {% endif %}
+</nav>
+<hr>
   </header>
 
   <main class="content">

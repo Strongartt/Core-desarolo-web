@@ -1,20 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Panel{% endblock %}
-
+{% block title %}Panel Principal{% endblock %}
 {% block content %}
-  <h1>Bienvenido, {{ user.get_full_name }}!</h1>
+<h1>Bienvenido, {{ user.get_full_name }}!</h1>
 
-  {% if user.is_superuser %}
-    <p>Debes usar el panel de <a href="{% url 'admin:index' %}">Administración</a>.</p>
-  {% elif user.perfil.rol.codigo == 'DOC' %}
-    <p>
-      <a href="{% url 'curso_list' %}">👩‍🏫 Gestión de Cursos</a><br>
-      <a href="{% url 'reporte_docente' %}">📊 Reporte de cursos</a>
-    </p>
-  {% else %}
-    <p>
-      <a href="{% url 'curso_list' %}">📚 Explorar Cursos</a><br>
-      <a href="{% url 'reporte_estudiante' %}">📝 Mis inscripciones</a>
-    </p>
-  {% endif %}
+{% if user.is_superuser %}
+  <p>Debes usar el panel de <a href="{% url 'admin:index' %}">Administración</a>.</p>
+
+{% elif user.perfil.rol.codigo == 'DOC' %}
+  <h2>👨‍🏫 Gestión de Cursos</h2>
+  <ul>
+    <li><a href="{% url 'mis_cursos' %}">📋 Ver Mis Cursos</a></li>
+    <li><a href="{% url 'curso_new' %}">➕ Crear Nuevo Curso</a></li>
+    <li><a href="{% url 'reporte_docente' %}">📊 Ver Reporte Personal</a></li>
+  </ul>
+
+{% elif user.perfil.rol.codigo == 'EST' %}
+  <h2>🎓 Mis Cursos</h2>
+  <ul>
+    <li><a href="{% url 'curso_list' %}">📚 Explorar Todos los Cursos</a></li>
+    <li><a href="{% url 'reporte_estudiante' %}">📝 Mi Progreso</a></li>
+  </ul>
+
+{% endif %}
 {% endblock %}

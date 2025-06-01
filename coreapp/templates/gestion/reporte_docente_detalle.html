@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Detalle del Curso{% endblock %}
+{% block content %}
+<h1>Detalle del Curso: {{ curso.nombre }}</h1>
+
+{% if inscripciones %}
+  <table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Estudiante</th>
+        <th>Email</th>
+        <th>Estado</th>
+        <th>Nota Final</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ins in inscripciones %}
+        <tr>
+          <td>{{ ins.usuario.get_full_name }}</td>
+          <td>{{ ins.usuario.email }}</td>
+          <td>{{ ins.estado }}</td>
+          <td>{{ ins.nota_final|default:"—" }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>No hay inscripciones en este curso.</p>
+{% endif %}
+
+<p><a href="{% url 'reporte_docente' %}">⬅ Volver al Reporte</a></p>
+{% endblock %}

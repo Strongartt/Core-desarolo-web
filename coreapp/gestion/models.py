@@ -33,7 +33,7 @@ class Curso(models.Model):
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
     cupo = models.PositiveIntegerField()
-    docente = models.ForeignKey(Perfil, on_delete=models.SET_NULL, null=True, limit_choices_to={'rol__codigo': 'DOC'})
+    docente = models.ForeignKey(Perfil, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'rol__codigo': 'DOC'})
 
     def __str__(self):
         return self.nombre
