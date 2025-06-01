@@ -3,24 +3,49 @@
 {% block content %}
   <h1>Mis Cursos - Estudiante</h1>
   <p>Listado de los cursos en los que estás inscrito y tu progreso.</p>
-  <table border="1" cellpadding="5" cellspacing="0">
-    <thead>
+<table border="1" cellpadding="5" cellspacing="0">
+  <thead>
+    <tr>
+      <th>Nombre del Curso</th>
+      <th>Modalidad</th>
+      <th>Fecha de Inscripción</th>
+      <th>Estado de Inscripción</th>
+      <th>Estado del Curso</th>
+      <th>Acción</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ins in inscripciones %}
       <tr>
-        <th>Nombre del Curso</th>
-        <th>Fecha de Inscripción</th>
-        <th>Estado</th>
+        <td>{{ ins.nombre }}</td>
+        <td>{{ ins.modalidad }}</td>
+        <td>{{ ins.fecha_inscripcion }}</td>
+        <td>{{ ins.estado_inscripcion }}</td>
+        <td>
+          {% if ins.estado_curso == "En curso" %}
+            <span style="color: green;">En curso</span>
+          {% else %}
+            <span style="color: red;">Finalizado</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if ins.estado_inscripcion == "Inscrito" and ins.solicitud_baja == "NINGUNA" %}
+            <form method="post" action="{% url 'solicitar_baja' ins.id %}">
+              {% csrf_token %}
+              <button type="submit">📝 Solicitar baja</button>
+            </form>
+          {% elif ins.solicitud_baja == "PENDIENTE" %}
+            <span style="color: orange;">Solicitud pendiente</span>
+          {% elif ins.solicitud_baja == "RECHAZADA" %}
+            <span style="color: red;">Solicitud rechazada</span>
+          {% elif ins.solicitud_baja == "APROBADA" %}
+            <span style="color: green;">Baja aprobada</span>
+          {% endif %}
+        </td>
       </tr>
-    </thead>
-    <tbody>
-      {% for inscripcion in inscripciones_estudiante %}
-        <tr>
-          <td>{{ inscripcion.curso.nombre }}</td>
-          <td>{{ inscripcion.fecha_inscripcion }}</td>
-          <td>{{ inscripcion.estado }}</td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="3">No estás inscrito en ningún curso.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    {% empty %}
+      <tr><td colspan="5">No estás inscrito en ningún curso.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

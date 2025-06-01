@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Solicitudes de Baja{% endblock %}
+{% block content %}
+<h1>Solicitudes de Baja - Docente</h1>
+
+{% if solicitudes %}
+<table border="1" cellpadding="5" cellspacing="0">
+  <thead>
+    <tr>
+      <th>Curso</th>
+      <th>Estudiante</th>
+      <th>Correo</th>
+      <th>Fecha</th>
+      <th>Acción</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ins in solicitudes %}
+      <tr>
+        <td>{{ ins.curso.nombre }}</td>
+        <td>{{ ins.usuario.get_full_name }}</td>
+        <td>{{ ins.usuario.email }}</td>
+        <td>{{ ins.fecha_inscripcion }}</td>
+        <td>
+          <form method="post" action="{% url 'aprobar_baja' ins.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit">✅ Aprobar</button>
+          </form>
+          <form method="post" action="{% url 'rechazar_baja' ins.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit">❌ Rechazar</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No hay solicitudes pendientes.</p>
+{% endif %}
+{% endblock %}

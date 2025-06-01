@@ -49,6 +49,8 @@ ESTADOS_INSCRIPCION = [
 ]
 
 class Inscripcion(models.Model):
+    
+    
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE)
     fecha_inscripcion = models.DateField(auto_now_add=True)
@@ -57,6 +59,20 @@ class Inscripcion(models.Model):
     asistencia_total = models.PositiveIntegerField(default=0)
     codigo_certificado = models.CharField(max_length=100, blank=True, null=True)
     fecha_certificado = models.DateField(blank=True, null=True)
+    
+    SOLICITUD_BAJA_CHOICES = [
+        ('NINGUNA', 'Ninguna'),
+        ('PENDIENTE', 'Pendiente'),
+        ('APROBADA', 'Aprobada'),
+        ('RECHAZADA', 'Rechazada'),
+    ]
+    
+    solicitud_baja = models.CharField(
+        max_length=10,
+        choices=SOLICITUD_BAJA_CHOICES,
+        default='NINGUNA'
+    )
+
 
     def __str__(self):
         return f'{self.usuario.get_full_name()} en {self.curso}'

@@ -8,6 +8,11 @@ from .forms import CursoForm, InscripcionForm, SignUpForm
 from django.shortcuts import redirect
 from django.contrib.auth.views import LoginView
 from .forms import UserPerfilForm
+from django.contrib import messages
+from django.shortcuts import get_object_or_404
+from django.views import View
+from django.utils import timezone
+
 
 
 
@@ -111,6 +116,25 @@ class InscripcionUpdateView(LoginRequiredMixin, AdministradorRolRequiredMixin, U
     success_url = reverse_lazy('inscripcion_list')
 
 
+class InscribirseView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'EST'
+
+    def post(self, request, curso_id):
+        curso = get_object_or_404(Curso, pk=curso_id)
+
+        ya_inscrito = Inscripcion.objects.filter(curso=curso, usuario=request.user).exists()
+        if ya_inscrito:
+            messages.error(request, "Ya estás inscrito en este curso.")
+        elif Inscripcion.objects.filter(curso=curso).count() >= curso.cupo:
+            messages.error(request, "El curso ya no tiene cupos disponibles.")
+        else:
+            Inscripcion.objects.create(curso=curso, usuario=request.user, estado="INSCRITO")
+            messages.success(request, "Te has inscrito correctamente.")
+
+        return redirect('curso_list')
+
+
 # —— Registro de nuevos usuarios “normales” ——
 class SignUpView(CreateView):
     form_class    = SignUpForm
@@ -130,6 +154,42 @@ class ReporteDocenteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
 class ReporteEstudianteView(LoginRequiredMixin, TemplateView):
     template_name = 'gestion/reporte_estudiante.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        hoy = timezone.now().date()
+
+        datos = []
+        inscripciones = Inscripcion.objects.filter(usuario=self.request.user).select_related('curso')
+        for ins in inscripciones:
+            curso = ins.curso
+            datos.append({
+                'id': ins.id,
+                'nombre': curso.nombre,
+                'modalidad': curso.modalidad,
+                'fecha_inscripcion': ins.fecha_inscripcion,
+                'estado_inscripcion': "Inscrito" if ins.estado.upper() == "INSCRITO" else "Dado de baja",
+                'estado_curso': "En curso" if curso.fecha_fin >= hoy else "Finalizado",
+                'solicitud_baja': ins.solicitud_baja
+            })
+
+        ctx['inscripciones'] = datos
+        return ctx
+
+class SolicitarBajaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'EST'
+
+    def post(self, request, pk):
+        inscripcion = get_object_or_404(Inscripcion, id=pk, usuario=request.user)
+        if inscripcion.solicitud_baja == 'NINGUNA' and inscripcion.estado.upper() == 'INSCRITO':
+            inscripcion.solicitud_baja = 'PENDIENTE'
+            inscripcion.save()
+            messages.success(request, "Solicitud de baja enviada.")
+        else:
+            messages.warning(request, "No puedes enviar esta solicitud.")
+        return redirect('reporte_estudiante')
+
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -157,7 +217,8 @@ class ReporteDocenteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             # Calcular estado medio si hay inscripciones
             if total > 0:
                 estados = inscripciones.values_list('estado', flat=True)
-                estado_mas_frecuente = max(set(estados), key=estados.count)
+                estado_list = list(estados)
+                estado_mas_frecuente = max(set(estado_list), key=estado_list.count)
             else:
                 estado_mas_frecuente = "Sin inscripciones"
 
@@ -192,16 +253,48 @@ class DetalleCursoDocenteView(LoginRequiredMixin, UserPassesTestMixin, TemplateV
             ctx['curso'] = None
             ctx['inscripciones'] = []
         return ctx
+    
+class GestionSolicitudesBajaView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'gestion/solicitudes_baja_docente.html'
 
+    def test_func(self):
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOC'
 
-class ReporteEstudianteView(LoginRequiredMixin, TemplateView):
-    template_name = 'gestion/reporte_estudiante.html'
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        # filtro por email del Usuario personalizado
-        email = self.request.user.email
-        ctx['inscripciones'] = Inscripcion.objects.filter(usuario__email=email).select_related('curso')
+        perfil = self.request.user.perfil
+        solicitudes = Inscripcion.objects.filter(
+            curso__docente=perfil,
+            solicitud_baja='PENDIENTE'
+        ).select_related('curso', 'usuario')
+
+        ctx['solicitudes'] = solicitudes
         return ctx
+   
+class AprobarBajaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOC'
+
+    def post(self, request, pk):
+        ins = get_object_or_404(Inscripcion, id=pk, curso__docente=request.user.perfil)
+        ins.solicitud_baja = 'APROBADA'
+        ins.estado = 'BAJA'
+        ins.save()
+        messages.success(request, "Baja aprobada.")
+        return redirect('solicitudes_baja')
+
+
+class RechazarBajaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOC'
+
+    def post(self, request, pk):
+        ins = get_object_or_404(Inscripcion, id=pk, curso__docente=request.user.perfil)
+        ins.solicitud_baja = 'RECHAZADA'
+        ins.save()
+        messages.info(request, "Solicitud de baja rechazada.")
+        return redirect('solicitudes_baja')
+
     
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'

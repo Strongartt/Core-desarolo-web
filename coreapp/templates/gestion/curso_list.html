@@ -22,19 +22,24 @@
         {% endif %}
       </tr>
     </thead>
-    <tbody>
-      {% for c in cursos %}
-        <tr>
-          <td>{{ c.nombre }}</td>
-          <td>{{ c.modalidad }}</td>
-          <td>{{ c.fecha_inicio }}</td>
-          <td>{{ c.fecha_fin }}</td>
-          <td>{{ c.cupo }}</td>
-          {% if user.is_superuser %}
-            <td>
-              <a href="{% url 'curso_edit' c.pk %}">Editar</a>
-            </td>
-          {% endif %}
+    <tbody>{% for c in cursos %}
+  <tr>
+    <td>{{ c.nombre }}</td>
+    <td>{{ c.modalidad }}</td>
+    <td>{{ c.fecha_inicio }}</td>
+    <td>{{ c.fecha_fin }}</td>
+    <td>{{ c.cupo }}</td>
+
+    {% if user.is_superuser %}
+      <td><a href="{% url 'curso_edit' c.pk %}">Editar</a></td>
+    {% elif user.perfil.rol.codigo == 'EST' %}
+        <td>
+        <form method="post" action="{% url 'inscribirse' c.id %}">
+          {% csrf_token %}
+          <button type="submit">📝 Inscribirse</button>
+        </form>
+      </td>
+    {% endif %}
         </tr>
       {% empty %}
         <tr>

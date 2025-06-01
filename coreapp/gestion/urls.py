@@ -15,6 +15,11 @@ from .views import (
     ReporteEstudianteView,
     MisCursosView,
     DetalleCursoDocenteView,
+    InscribirseView,
+    SolicitarBajaView,
+    GestionSolicitudesBajaView,
+    AprobarBajaView,
+    RechazarBajaView
 )
 
 urlpatterns = [
@@ -44,7 +49,15 @@ urlpatterns = [
     
     path('mis-cursos/', MisCursosView.as_view(), name='mis_cursos'),
     
-    
     path('reporte-curso/<int:pk>/', DetalleCursoDocenteView.as_view(), name='reporte_docente_detalle'),
+    
+    path('cursos/<int:curso_id>/inscribirse/', InscribirseView.as_view(), name='inscribirse'),
+
+    path('solicitar-baja/<int:pk>/', SolicitarBajaView.as_view(), name='solicitar_baja'),
+    
+    path('solicitudes-baja/', GestionSolicitudesBajaView.as_view(), name='solicitudes_baja'),
+    path('solicitudes-baja/aprobar/<int:pk>/', AprobarBajaView.as_view(), name='aprobar_baja'),
+    path('solicitudes-baja/rechazar/<int:pk>/', RechazarBajaView.as_view(), name='rechazar_baja'),
+
 
 ]
