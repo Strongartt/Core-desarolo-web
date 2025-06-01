@@ -1,14 +1,9 @@
 from django.contrib import admin
-from .models import Rol, Usuario, Curso, Inscripcion
+from .models import Rol, Curso, Inscripcion
 
 @admin.register(Rol)
 class RolAdmin(admin.ModelAdmin):
     list_display = ('codigo', 'nombre')
-
-@admin.register(Usuario)
-class UsuarioAdmin(admin.ModelAdmin):
-    list_display = ('nombre','apellido','email','rol')
-    list_filter  = ('rol',)
 
 @admin.register(Curso)
 class CursoAdmin(admin.ModelAdmin):

@@ -1,40 +1,40 @@
 # gestion/views.py
-
+from django.contrib.auth.models import User
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, TemplateView
-from .models import Usuario, Curso, Inscripcion
-from .forms import UsuarioForm, CursoForm, InscripcionForm, SignUpForm
-from django.shortcuts import redirect
 from .models import Curso, Inscripcion
+from .forms import CursoForm, InscripcionForm, SignUpForm
+from django.shortcuts import redirect
 from django.contrib.auth.views import LoginView
+from .forms import UserPerfilForm
+
+class AdminRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_superuser
+
+class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView):
+    model = User
+    template_name = 'gestion/usuario_list.html'
+    context_object_name = 'usuarios'
+
+class UsuarioCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+    model = User
+    form_class = UserPerfilForm
+    template_name = 'gestion/usuario_form.html'
+    success_url = reverse_lazy('usuario_list')
+
+class UsuarioUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+    model = User
+    form_class = UserPerfilForm
+    template_name = 'gestion/usuario_form.html'
+    success_url = reverse_lazy('usuario_list')
 
 
 # Permite sólo a super-usuarios
 class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_superuser
-
-
-# —— CRUD Usuarios ——
-class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView):
-    model = Usuario
-    template_name = 'gestion/usuario_list.html'
-    context_object_name = 'usuarios'
-
-
-class UsuarioCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
-    model = Usuario
-    form_class = UsuarioForm
-    template_name = 'gestion/usuario_form.html'
-    success_url = reverse_lazy('usuario_list')
-
-
-class UsuarioUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
-    model = Usuario
-    form_class = UsuarioForm
-    template_name = 'gestion/usuario_form.html'
-    success_url = reverse_lazy('usuario_list')
 
 
 # —— CRUD Cursos ——

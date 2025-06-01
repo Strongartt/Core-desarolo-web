@@ -5,26 +5,23 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Usuario, Curso, Inscripcion, Rol, Perfil
+from .models import Curso, Inscripcion, Rol, Perfil
 
 
-class UsuarioForm(forms.ModelForm):
+class UserPerfilForm(forms.ModelForm):
+    rol = forms.ModelChoiceField(queryset=Rol.objects.exclude(codigo='ADMIN'), label="Rol")
+
     class Meta:
-        model = Usuario
-        fields = ['nombre', 'apellido', 'email', 'password', 'rol']
-        widgets = {
-            'password': forms.PasswordInput(),
-            'rol':      forms.Select(),
-        }
+        model = User
+        fields = ['first_name', 'last_name', 'email']
 
-    def clean_email(self):
-        email = self.cleaned_data['email']
-        if not email.endswith('@midominio.com'):
-            raise ValidationError("El correo debe terminar en @midominio.com")
-        if Usuario.objects.filter(email=email).exists():
-            raise ValidationError("Ya existe un usuario con ese correo")
-        return email
-
+    def save(self, commit=True):
+        user = super().save(commit)
+        perfil, created = Perfil.objects.get_or_create(user=user)
+        perfil.rol = self.cleaned_data['rol']
+        if commit:
+            perfil.save()
+        return user
 
 class CursoForm(forms.ModelForm):
     class Meta:
@@ -126,12 +123,14 @@ class SignUpForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        # username e email ambos serán el correo
         user.username   = self.cleaned_data["username"]
         user.email      = self.cleaned_data["username"]
         user.first_name = self.cleaned_data["first_name"]
         user.last_name  = self.cleaned_data["last_name"]
         if commit:
             user.save()
-            Perfil.objects.create(user=user, rol=self.cleaned_data["rol"])
+            # Crea el perfil si no existe (evita duplicados)
+            perfil, created = Perfil.objects.get_or_create(user=user)
+            perfil.rol = self.cleaned_data["rol"]
+            perfil.save()
         return user

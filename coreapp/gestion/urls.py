@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
-    UsuarioListView,
-    UsuarioCreateView,
+    UsuarioListView, 
+    UsuarioCreateView, 
     UsuarioUpdateView,
     CursoListView,
     CursoCreateView,
@@ -16,7 +16,8 @@ from .views import (
 )
 
 urlpatterns = [
-    # CRUD Usuarios
+  
+    # CRUD Usuarios (basado en User + Perfil)
     path('usuarios/', UsuarioListView.as_view(), name='usuario_list'),
     path('usuarios/nuevo/', UsuarioCreateView.as_view(), name='usuario_new'),
     path('usuarios/<int:pk>/editar/', UsuarioUpdateView.as_view(), name='usuario_edit'),
