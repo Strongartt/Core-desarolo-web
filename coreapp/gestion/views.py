@@ -169,14 +169,6 @@ class SignUpView(CreateView):
 
 
 # —— Reportes según rol ——
-class ReporteDocenteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    template_name = 'gestion/reporte_docente.html'
-
-    def test_func(self):
-        user = self.request.user
-        return user.is_superuser or (
-            hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOC'
-        )
 
 
 class ReporteEstudianteView(LoginRequiredMixin, TemplateView):
@@ -227,44 +219,60 @@ class ReporteDocenteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
     def test_func(self):
         user = self.request.user
+        if user.is_superuser:
+            return True  
         return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOC'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        perfil = self.request.user.perfil
+        user = self.request.user
+        hoy = timezone.now().date()
 
-        # Solo cursos asignados al docente logueado
-        cursos_docente = Curso.objects.filter(docente=perfil)
+        # Si es superusuario, ver todos los cursos
+        if user.is_superuser:
+            cursos_docente = Curso.objects.all()
+        else:
+            perfil = user.perfil
+            cursos_docente = Curso.objects.filter(docente=perfil)
 
         datos = []
         for curso in cursos_docente:
             inscripciones = Inscripcion.objects.filter(curso=curso)
             total = inscripciones.count()
 
-            # Calcular estado medio si hay inscripciones
             if total > 0:
-                estados = inscripciones.values_list('estado', flat=True)
-                estado_list = list(estados)
-                estado_mas_frecuente = max(set(estado_list), key=estado_list.count)
+                notas = [i.nota_final for i in inscripciones if i.nota_final is not None]
+                promedio_nota = round(sum(notas) / len(notas), 2) if notas else "—"
+
+                asistencias = [i.asistencia_total for i in inscripciones if i.asistencia_total is not None]
+                promedio_asistencia = round(sum(asistencias) / len(asistencias), 2) if asistencias else "—"
             else:
-                estado_mas_frecuente = "Sin inscripciones"
+                promedio_nota = "—"
+                promedio_asistencia = "—"
 
             datos.append({
-                'id': curso.id, 
                 'nombre': curso.nombre,
+                'categoria': curso.categoria.nombre if curso.categoria else "Con categoría",
+                'modalidad': curso.modalidad,
+                'fecha_inicio': curso.fecha_inicio,
+                'fecha_fin': curso.fecha_fin,
                 'inscritos': total,
-                'estado_medio': estado_mas_frecuente
+                'promedio_nota': promedio_nota,
+                'promedio_asistencia': promedio_asistencia,
             })
 
         ctx['datos'] = datos
+        ctx['today'] = hoy
         return ctx
+
+
 
 class DetalleCursoDocenteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'gestion/reporte_docente_detalle.html'
 
     def test_func(self):
         user = self.request.user
-        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOC'
+        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOS'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -285,7 +293,7 @@ class GestionSolicitudesBajaView(LoginRequiredMixin, UserPassesTestMixin, Templa
     template_name = 'gestion/solicitudes_baja_docente.html'
 
     def test_func(self):
-        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOC'
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOS'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -300,7 +308,7 @@ class GestionSolicitudesBajaView(LoginRequiredMixin, UserPassesTestMixin, Templa
    
 class AprobarBajaView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
-        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOC'
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOS'
 
     def post(self, request, pk):
         ins = get_object_or_404(Inscripcion, id=pk, curso__docente=request.user.perfil)
@@ -313,7 +321,7 @@ class AprobarBajaView(LoginRequiredMixin, UserPassesTestMixin, View):
 
 class RechazarBajaView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
-        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOC'
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOS'
 
     def post(self, request, pk):
         ins = get_object_or_404(Inscripcion, id=pk, curso__docente=request.user.perfil)
@@ -342,7 +350,7 @@ class EditarNotasAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Templat
 
     def test_func(self):
         user = self.request.user
-        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOC'
+        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOS'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -428,7 +436,7 @@ class SeleccionarMembresiaView(LoginRequiredMixin, UserPassesTestMixin, UpdateVi
         perfil.fecha_fin_membresia = hoy + timedelta(days=30)
 
         perfil.save()
-        messages.success(self.request, f"Tu membresía '{plan.nombre}' está activa hasta el {perfil.fecha_fin_membresia}.")
+        messages.success(self.request, f"Tu membresawaía '{plan.nombre}' está activa hasta el {perfil.fecha_fin_membresia}.")
         return super().form_valid(form)
 
     def test_func(self):
@@ -442,4 +450,93 @@ class EditarMembresiaEstudianteView(LoginRequiredMixin, AdministradorRolRequired
 
     def get_queryset(self):
         return Perfil.objects.filter(rol__codigo='EST')
+    
+class ReporteIngresosCursoView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'gestion/reporte_ingresos_curso.html'
 
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        cursos = Curso.objects.all()
+
+        datos = []
+        for curso in cursos:
+            inscritos = curso.inscripcion_set.count()
+            precio = curso.precio
+            total = round(inscritos * precio, 2)
+
+            datos.append({
+                'nombre': curso.nombre,
+                'inscritos': inscritos,
+                'precio': precio,
+                'total': total,
+            })
+
+        ctx['datos'] = datos
+        return ctx
+    
+class ReporteIngresosCategoriaView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'gestion/reporte_ingresos_categoria.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        categorias = CategoriaCurso.objects.all()
+
+        datos = []
+        for categoria in categorias:
+            cursos = Curso.objects.filter(categoria=categoria)
+            total_cursos = cursos.count()
+
+            total_inscritos = 0
+            total_ingresos = 0.0
+
+            for curso in cursos:
+                inscritos = curso.inscripcion_set.count()
+                ingresos = inscritos * float(curso.precio)
+                total_inscritos += inscritos
+                total_ingresos += ingresos
+
+            datos.append({
+                'nombre': categoria.nombre,
+                'total_cursos': total_cursos,
+                'total_inscritos': total_inscritos,
+                'total_ingresos': round(total_ingresos, 2),
+            })
+
+        ctx['datos'] = datos
+        return ctx
+
+class ReporteGananciasMensualesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'gestion/reporte_ganancias_mensuales.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        datos = (
+            Inscripcion.objects
+            .annotate(mes=TruncMonth('fecha_inscripcion'))
+            .values('mes')
+            .annotate(
+                total_inscripciones=Count('id'),
+                total_ganado=Sum(ExpressionWrapper(
+                    F('curso__precio'),
+                    output_field=FloatField()
+                ))
+            )
+            .order_by('mes')
+        )
+
+        # Redondear los ingresos
+        for d in datos:
+            d['total_ganado'] = round(d['total_ganado'] or 0, 2)
+
+        ctx['datos'] = datos
+        return ctx

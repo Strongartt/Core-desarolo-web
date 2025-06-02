@@ -1,35 +1,47 @@
-{% extends 'base.html' %}
-{% block title %}Reporte de Cursos (Docente){% endblock %}
+{% extends "base.html" %}
+{% block title %}Reporte de Cursos - Docente{% endblock %}
+
 {% block content %}
 <h1>Reporte de Cursos - Docente</h1>
-<p>Listado de los cursos que impartes, con detalles de inscripciones y estadísticas.</p>
 
-<table border="1" cellpadding="5" cellspacing="0">
-  <thead>
-    <tr>
-      <th>Nombre del Curso</th>
-      <th>Inscritos</th>
-      <th>Estado Medio</th>
-      <th>Acciones</th>
-      <th>Editar</th>
-      <th>Asistencia (%)</th>
-
-    </tr>
-  </thead>
-  <tbody>
-    {% for curso in datos %}
+{% if datos %}
+  <table border="1" cellpadding="5" cellspacing="0">
+    <thead>
       <tr>
-        <td>{{ curso.nombre }}</td>
-        <td>{{ curso.inscritos }}</td>
-        <td>{{ curso.estado_medio }}</td>
-        <td><a href="{% url 'reporte_docente_detalle' curso.id %}">🔍 Ver Detalle</a></td>
-        <td>{{ ins.asistencia_total }}</td>
-        <td><a href="{% url 'editar_notas_asistencia' curso.id %}">📝 Editar Notas</a></td>
-
+        <th>Nombre del Curso</th>
+        <th>Categoría</th>
+        <th>Modalidad</th>
+        <th>Fechas</th>
+        <th>Estado</th>
+        <th>Inscritos</th>
+        <th>Promedio Nota</th>
+        <th>Promedio Asistencia</th>
       </tr>
-    {% empty %}
-      <tr><td colspan="3">No hay cursos asignados.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      {% for c in datos %}
+        <tr>
+          <td>{{ c.nombre }}</td>
+          <td>{{ c.categoria }}</td>
+          <td>{{ c.modalidad }}</td>
+          <td>{{ c.fecha_inicio }} a {{ c.fecha_fin }}</td>
+          <td>
+            {% if c.fecha_fin >= today %}
+              En curso
+            {% else %}
+              Finalizado
+            {% endif %}
+          </td>
+          <td>{{ c.inscritos }}</td>
+          <td>{{ c.promedio_nota }}</td>
+          <td>{{ c.promedio_asistencia }}%</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>No se encontraron cursos asignados.</p>
+{% endif %}
+
+<p><a href="{% url 'dashboard' %}">⬅ Volver al Dashboard</a></p>
 {% endblock %}

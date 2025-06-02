@@ -12,6 +12,7 @@
       <th>Categoría</th>
       <th>Precio</th>
       <th>Cupo disponible</th>
+      <th>Inscritos</th>
       <th>Acciones</th>
     </tr>
   </thead>
@@ -24,7 +25,11 @@
         <td>{{ c.categoria.nombre }}</td>
         <td>${{ c.precio }}</td>
         <td>{{ c.cupos_disponibles }}</td>
-        <td><a href="{% url 'curso_edit' c.pk %}">Editar</a></td>
+        <td>{{ c.inscripcion_set.count }}</td>
+        <td><a href="{% url 'curso_edit' c.pk %}">Editar</a>
+        <a href="{% url 'editar_notas_asistencia' c.id %}">Editar Notas y Asistencia</a>
+        </td>
+
       </tr>
     {% empty %}
       <tr><td colspan="7">No has creado cursos todavía.</td></tr>

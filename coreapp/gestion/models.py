@@ -4,6 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 
+
 # ----- ROLES Y PERFIL -----
 
 class Rol(models.Model):
@@ -13,8 +14,7 @@ class Rol(models.Model):
     def __str__(self):
         return self.nombre
 
-from django.utils import timezone
-from datetime import date
+
 
 class Perfil(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -28,15 +28,32 @@ class Perfil(models.Model):
 
     def membresia_activa(self):
         hoy = timezone.now().date()
-        if self.plan_membresia and self.fecha_fin_membresia:
-            return hoy <= self.fecha_fin_membresia
-        return False
+        if not self.plan_membresia:
+            return False
+
+        if self.plan_membresia.nombre.lower() == 'gratuita':
+            return True  # Gratuita no caduca
+
+        return (
+            self.fecha_inicio_membresia is not None and
+            self.fecha_fin_membresia is not None and
+            self.fecha_inicio_membresia <= hoy <= self.fecha_fin_membresia
+        )
+
+        
 
     def get_plan_actual(self):
+        from .models import PlanMembresia
+
+        if self.plan_membresia and self.plan_membresia.nombre.lower() == 'gratuita':
+            return self.plan_membresia
+
         if self.membresia_activa():
             return self.plan_membresia
-        # Si venció, se considera como plan gratuito
+
         return PlanMembresia.objects.filter(nombre__iexact="Gratuita").first()
+
+
 
 
 # ----- CURSO -----
@@ -63,9 +80,21 @@ class Curso(models.Model):
 
     def __str__(self):
         return self.nombre
+
     @property
     def cupos_disponibles(self):
         return self.cupo - self.inscripcion_set.count()
+
+    @property
+    def membresia_requerida(self):
+        if self.precio == 0:
+            return "Gratuita"
+        elif self.precio <= 20:
+            return "Básica"
+        else:
+            return "Premium"
+
+
 
 
 

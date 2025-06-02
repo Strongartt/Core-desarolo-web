@@ -9,43 +9,56 @@
     <p><a href="{% url 'curso_new' %}">+ Crear Nuevo Curso</a></p>
   {% endif %}
 
-  <table border="1" cellpadding="5" cellspacing="0">
-    <thead>
+    <table border="1" cellpadding="5" cellspacing="0">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Modalidad</th>
+      <th>Fecha inicio</th>
+      <th>Fecha fin</th>
+      <th>Cupos disponibles</th>
+      <th>Membresía requerida</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in cursos %}
       <tr>
-        <th>Nombre</th>
-        <th>Modalidad</th>
-        <th>Fecha inicio</th>
-        <th>Fecha fin</th>
-        <th>Cupo</th>
-        {% if user.is_superuser %}
-          <th>Acciones</th>
-        {% endif %}
-      </tr>
-    </thead>
-    <tbody>{% for c in cursos %}
-  <tr>
-    <td>{{ c.nombre }}</td>
-    <td>{{ c.modalidad }}</td>
-    <td>{{ c.fecha_inicio }}</td>
-    <td>{{ c.fecha_fin }}</td>
-    <td>{{ c.cupo }}</td>
-
-    {% if user.is_superuser %}
-      <td><a href="{% url 'curso_edit' c.pk %}">Editar</a></td>
-    {% elif user.perfil.rol.codigo == 'EST' %}
+        <td>{{ c.nombre }}</td>
+        <td>{{ c.modalidad }}</td>
+        <td>{{ c.fecha_inicio }}</td>
+        <td>{{ c.fecha_fin }}</td>
+        <td>{{ c.cupos_disponibles }}</td>
+        <td>{{ c.membresia_requerida }}</td>
         <td>
-        <form method="post" action="{% url 'inscribirse' c.id %}">
-          {% csrf_token %}
-          <button type="submit">📝 Inscribirse</button>
-        </form>
-      </td>
-    {% endif %}
-        </tr>
-      {% empty %}
-        <tr>
-          <td colspan="6">No hay cursos disponibles.</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+          {% if user.is_superuser %}
+            <a href="{% url 'curso_edit' c.pk %}">Editar</a>
+          {% elif user.perfil.rol.codigo == 'EST' %}
+            {% with plan=user.perfil.get_plan_actual %}
+              {% if c.precio == 0 %}
+                <form method="post" action="{% url 'inscribirse' c.id %}">
+                  {% csrf_token %}
+                  <button type="submit">📝 Inscribirse</button>
+                </form>
+              {% elif c.cupos_disponibles <= 0 %}
+                <button disabled>❌ Sin cupos</button>
+              {% elif plan and c.precio > plan.limite_precio_curso %}
+                <button disabled>🚫 No autorizado</button>
+              {% else %}
+                <form method="post" action="{% url 'inscribirse' c.id %}">
+                  {% csrf_token %}
+                  <button type="submit">📝 Inscribirse</button>
+                </form>
+              {% endif %}
+            {% endwith %}
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7">No hay cursos disponibles.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+
 {% endblock %}

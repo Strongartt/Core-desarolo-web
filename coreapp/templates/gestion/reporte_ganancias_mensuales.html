@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Reporte de Ganancias por Mes{% endblock %}
+
+{% block content %}
+  <h1>📅 Reporte de Ganancias por Mes</h1>
+  <p>Este reporte muestra el total de inscripciones e ingresos agrupados por mes.</p>
+
+  {% if datos %}
+    <table border="1" cellpadding="5" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Mes</th>
+          <th>Total de Inscripciones</th>
+          <th>Total Ingresos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in datos %}
+          <tr>
+            <td>{{ item.mes|date:"F Y" }}</td>
+            <td>{{ item.total_inscripciones }}</td>
+            <td><strong>${{ item.total_ganado }}</strong></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No hay datos de inscripciones registrados.</p>
+  {% endif %}
+
+  <br>
+  <p><a href="{% url 'gestion_admin' %}">⬅ Volver al Panel de Administración</a></p>
+{% endblock %}

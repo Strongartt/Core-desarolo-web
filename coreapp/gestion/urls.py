@@ -28,6 +28,9 @@ from .views import (
     CategoriaCreateView,
     SeleccionarMembresiaView,
     EditarMembresiaEstudianteView,
+    ReporteIngresosCursoView,
+    ReporteIngresosCategoriaView,
+    ReporteGananciasMensualesView,
 
 )
 
@@ -81,6 +84,14 @@ urlpatterns = [
     path('seleccionar-membresia/', SeleccionarMembresiaView.as_view(), name='seleccionar_membresia'),
 
     path('usuarios/<int:pk>/editar-membresia/', EditarMembresiaEstudianteView.as_view(), name='editar_membresia_estudiante'),
+
+    path('mis-cursos/<int:pk>/editar-notas-asistencia/', EditarNotasAsistenciaView.as_view(), name='editar_notas_asistencia'),
+
+    path('reporte/ingresos-curso/', ReporteIngresosCursoView.as_view(), name='reporte_ingresos_curso'),
+
+    path('reporte/ingresos-categoria/', ReporteIngresosCategoriaView.as_view(), name='reporte_ingresos_categoria'),
+
+    path('reporte/ganancias-mensuales/', ReporteGananciasMensualesView.as_view(), name='reporte_ganancias_mensuales'),
 
 ]
 

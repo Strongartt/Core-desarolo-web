@@ -11,20 +11,23 @@
   <ul>
     <li><a href="{% url 'mis_cursos' %}">📋 Ver Mis Cursos</a></li>
     <li><a href="{% url 'curso_new' %}">➕ Crear Nuevo Curso</a></li>
-    <li><a href="{% url 'reporte_docente' %}">📊 Ver Reporte Personal</a></li>
+    <li><a href="{% url 'reporte_docente' %}">📊 Reporte cursos</a></li>
     <li><a href="{% url 'solicitudes_baja' %}">📩 Revisar Solicitudes de Baja</a></li>
     
   </ul>
 
 {% elif user.perfil.rol.codigo == 'EST' %}
   <p>
-    <strong>Plan actual:</strong>
-    {% if user.perfil.membresia_activa %}
-      {{ user.perfil.plan_membresia.nombre }} (vigente hasta {{ user.perfil.fecha_fin_membresia }})
+  <strong>Plan actual:</strong>
+  {% with plan=user.perfil.get_plan_actual %}
+    {% if plan.nombre == "Gratuita" %}
+      Gratuita (siempre activa)
     {% else %}
-      Gratuita (membresía vencida o no activa)
+      {{ plan.nombre }}{% if user.perfil.membresia_activa %} (vigente hasta {{ user.perfil.fecha_fin_membresia }}){% else %} (vencida){% endif %}
     {% endif %}
-  </p>
+  {% endwith %}
+</p>
+
   <h2>🎓 Mis Cursos</h2>
   <ul>
     <li><a href="{% url 'curso_list' %}">📚 Explorar Todos los Cursos</a></li>

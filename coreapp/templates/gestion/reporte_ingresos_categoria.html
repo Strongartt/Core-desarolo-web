@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Reporte de Ingresos por Categoría{% endblock %}
+
+{% block content %}
+  <h1>📊 Reporte de Ingresos por Categoría</h1>
+  <p>Muestra la cantidad de cursos, inscripciones y el total generado por categoría.</p>
+
+  {% if datos %}
+    <table border="1" cellpadding="5" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Categoría</th>
+          <th>Cantidad de Cursos</th>
+          <th>Total de Inscritos</th>
+          <th>Total Ingresos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in datos %}
+          <tr>
+            <td>{{ item.nombre }}</td>
+            <td>{{ item.total_cursos }}</td>
+            <td>{{ item.total_inscritos }}</td>
+            <td><strong>${{ item.total_ingresos }}</strong></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No hay categorías registradas.</p>
+  {% endif %}
+
+  <br>
+  <p><a href="{% url 'gestion_admin' %}">⬅ Volver al Panel de Administración</a></p>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Reporte de Ingresos por Curso{% endblock %}
+
+{% block content %}
+  <h1>💰 Reporte de Ingresos por Curso</h1>
+  <p>Este reporte muestra el total generado por cada curso a través de sus inscripciones.</p>
+
+  {% if datos %}
+    <table border="1" cellpadding="5" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Curso</th>
+          <th>Inscritos</th>
+          <th>Precio Unitario</th>
+          <th>Total Ingresos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in datos %}
+          <tr>
+            <td>{{ item.nombre }}</td>
+            <td>{{ item.inscritos }}</td>
+            <td>${{ item.precio }}</td>
+            <td><strong>${{ item.total }}</strong></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No hay cursos disponibles.</p>
+  {% endif %}
+
+  <br>
+  <p><a href="{% url 'gestion_admin' %}">⬅ Volver al Panel de Administración</a></p>
+{% endblock %}
