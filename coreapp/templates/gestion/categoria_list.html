@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Categorías de Cursos{% endblock %}
+{% block content %}
+  <h1>📚 Categorías de Cursos</h1>
+
+  <p><a href="{% url 'categoria_create' %}">➕ Nueva Categoría</a></p>
+
+  <table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cat in categorias %}
+        <tr>
+          <td>{{ cat.nombre }}</td>
+          <td>
+            <a href="{% url 'categoria_edit' cat.pk %}">✏️ Editar</a> |
+            <a href="{% url 'categoria_delete' cat.pk %}">🗑️ Eliminar</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="2">No hay categorías registradas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p><a href="{% url 'dashboard' %}">← Volver al Inicio</a></p>
+{% endblock %}

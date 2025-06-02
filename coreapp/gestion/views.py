@@ -2,24 +2,26 @@
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import ListView, CreateView, UpdateView, TemplateView
-from .models import Curso, Inscripcion
-from .forms import CursoForm, InscripcionForm, SignUpForm
+from django.views.generic import ListView, CreateView, UpdateView, TemplateView, DeleteView
+from .models import Curso, Inscripcion, CategoriaCurso
+from .forms import CursoForm, InscripcionForm, SignUpForm,UserPerfilForm, CategoriaCursoForm
 from django.shortcuts import redirect
 from django.contrib.auth.views import LoginView
-from .forms import UserPerfilForm
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.views import View
 from django.utils import timezone
 
 
-
-
 class AdministradorRolRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         user = self.request.user
-        return user.is_authenticated and hasattr(user, 'perfil') and user.perfil.rol.codigo == 'ADMIN'
+        return user.is_superuser or (
+            user.is_authenticated and
+            hasattr(user, 'perfil') and
+            user.perfil.rol.codigo == 'ADMIN'
+        )
+
 
 class AdminODocenteRequiredMixin(UserPassesTestMixin):
     def test_func(self):
@@ -147,9 +149,10 @@ class ReporteDocenteView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'gestion/reporte_docente.html'
 
     def test_func(self):
-        # Asume que tu User siempre tiene perfil y rol con código 'DOC' para docentes
-        return hasattr(self.request.user, 'perfil') and \
-               self.request.user.perfil.rol.codigo == 'DOC'
+        user = self.request.user
+        return user.is_superuser or (
+            hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOC'
+        )
 
 
 class ReporteEstudianteView(LoginRequiredMixin, TemplateView):
@@ -295,11 +298,89 @@ class RechazarBajaView(LoginRequiredMixin, UserPassesTestMixin, View):
         messages.info(request, "Solicitud de baja rechazada.")
         return redirect('solicitudes_baja')
 
-    
+
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        return reverse_lazy('dashboard') 
+        user = self.request.user
+        if user.is_superuser:
+            return reverse_lazy('gestion_admin')
+        perfil = getattr(user, 'perfil', None)
+        if perfil and perfil.rol.codigo == 'DOC':
+            return reverse_lazy('curso_list')
+        return reverse_lazy('dashboard')
 
+
+class EditarNotasAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'gestion/editar_notas_asistencia.html'
+
+    def test_func(self):
+        user = self.request.user
+        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOC'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        curso_id = self.kwargs.get('pk')
+        perfil = self.request.user.perfil
+
+        curso = get_object_or_404(Curso, id=curso_id, docente=perfil)
+        inscripciones = Inscripcion.objects.filter(curso=curso).select_related('usuario')
+
+        ctx['curso'] = curso
+        ctx['inscripciones'] = inscripciones
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        perfil = request.user.perfil
+        curso_id = self.kwargs.get('pk')
+        curso = get_object_or_404(Curso, id=curso_id, docente=perfil)
+
+        for inscripcion in Inscripcion.objects.filter(curso=curso):
+            nota_key = f'nota_{inscripcion.id}'
+            asistencia_key = f'asistencia_{inscripcion.id}'
+
+            try:
+                nota = request.POST.get(nota_key)
+                asistencia = request.POST.get(asistencia_key)
+
+                if nota:
+                    inscripcion.nota_final = float(nota)
+                if asistencia:
+                    inscripcion.asistencia_total = int(asistencia)
+
+                inscripcion.save()
+            except ValueError:
+                pass  # Puedes agregar mensajes si deseas manejar errores específicos
+
+        messages.success(request, "Notas y asistencia actualizadas.")
+        return redirect('editar_notas_asistencia', pk=curso.id)
+    
+class CategoriaCreateView(LoginRequiredMixin, AdministradorRolRequiredMixin, CreateView):
+    model = CategoriaCurso
+    form_class = CategoriaCursoForm
+    template_name = 'gestion/categoria_form.html'
+    success_url = reverse_lazy('categoria_list')    
+
+class CategoriaUpdateView(LoginRequiredMixin, AdministradorRolRequiredMixin, UpdateView):
+    model = CategoriaCurso
+    form_class = CategoriaCursoForm
+    template_name = 'gestion/categoria_form.html'
+    success_url = reverse_lazy('categoria_list')
+    
+class CategoriaDeleteView(LoginRequiredMixin, AdministradorRolRequiredMixin, DeleteView):
+    model = CategoriaCurso
+    template_name = 'gestion/categoria_confirm_delete.html'
+    success_url = reverse_lazy('categoria_list')
+
+class GestionAdminView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'gestion/gestion_admin.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+class CategoriaListView(LoginRequiredMixin, AdministradorRolRequiredMixin, ListView):
+    model = CategoriaCurso
+    template_name = 'gestion/categoria_list.html'
+    context_object_name = 'categorias'

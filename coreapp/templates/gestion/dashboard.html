@@ -12,6 +12,7 @@
     <li><a href="{% url 'mis_cursos' %}">📋 Ver Mis Cursos</a></li>
     <li><a href="{% url 'curso_new' %}">➕ Crear Nuevo Curso</a></li>
     <li><a href="{% url 'reporte_docente' %}">📊 Ver Reporte Personal</a></li>
+    <li><a href="{% url 'solicitudes_baja' %}">📩 Revisar Solicitudes de Baja</a></li>
   </ul>
 
 {% elif user.perfil.rol.codigo == 'EST' %}

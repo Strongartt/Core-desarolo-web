@@ -21,6 +21,11 @@ class Perfil(models.Model):
 
 
 # ----- CURSO -----
+class CategoriaCurso(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nombre
 
 MODALIDADES = [
     ('PRESENCIAL', 'Presencial'),
@@ -34,6 +39,8 @@ class Curso(models.Model):
     fecha_fin = models.DateField()
     cupo = models.PositiveIntegerField()
     docente = models.ForeignKey(Perfil, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'rol__codigo': 'DOC'})
+    categoria = models.ForeignKey(CategoriaCurso, on_delete=models.CASCADE, null=True)
+    precio = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
 
     def __str__(self):
         return self.nombre
@@ -107,3 +114,5 @@ def crear_perfil_automatico(sender, instance, created, **kwargs):
         rol_defecto = Rol.objects.filter(codigo='EST').first()
         if rol_defecto:
             Perfil.objects.create(user=instance, rol=rol_defecto)
+            
+

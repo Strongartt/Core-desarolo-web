@@ -19,7 +19,13 @@ from .views import (
     SolicitarBajaView,
     GestionSolicitudesBajaView,
     AprobarBajaView,
-    RechazarBajaView
+    RechazarBajaView,
+    EditarNotasAsistenciaView,
+    CategoriaUpdateView,
+    CategoriaDeleteView,
+    GestionAdminView,
+    CategoriaListView,
+    CategoriaCreateView  
 )
 
 urlpatterns = [
@@ -58,6 +64,16 @@ urlpatterns = [
     path('solicitudes-baja/', GestionSolicitudesBajaView.as_view(), name='solicitudes_baja'),
     path('solicitudes-baja/aprobar/<int:pk>/', AprobarBajaView.as_view(), name='aprobar_baja'),
     path('solicitudes-baja/rechazar/<int:pk>/', RechazarBajaView.as_view(), name='rechazar_baja'),
+
+    path('editar-notas-asistencia/<int:pk>/', EditarNotasAsistenciaView.as_view(), name='editar_notas_asistencia'),
+    
+    path('categorias/editar/<int:pk>/', CategoriaUpdateView.as_view(), name='categoria_edit'),
+    path('categorias/eliminar/<int:pk>/', CategoriaDeleteView.as_view(), name='categoria_delete'),
+    path('categorias/nueva/', CategoriaCreateView.as_view(), name='categoria_create'),
+    path('categorias/', CategoriaListView.as_view(), name='categoria_list'),
+
+    
+    path('admin-panel/', GestionAdminView.as_view(), name='gestion_admin'),
 
 
 ]

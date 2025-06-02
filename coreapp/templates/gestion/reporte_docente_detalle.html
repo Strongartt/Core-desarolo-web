@@ -1,7 +1,24 @@
 {% extends "base.html" %}
 {% block title %}Detalle del Curso{% endblock %}
 {% block content %}
+
 <h1>Detalle del Curso: {{ curso.nombre }}</h1>
+
+<!-- DATOS GENERALES DEL CURSO -->
+<ul>
+  <li><strong>Categoría:</strong> {{ curso.categoria.nombre }}</li>
+  <li><strong>Modalidad:</strong> {{ curso.modalidad }}</li>
+  <li><strong>Fecha de inicio:</strong> {{ curso.fecha_inicio }}</li>
+  <li><strong>Fecha de fin:</strong> {{ curso.fecha_fin }}</li>
+  <li><strong>Estado del curso:</strong>
+    {% if curso.fecha_fin >= today %}
+      <span style="color: green;">En curso</span>
+    {% else %}
+      <span style="color: red;">Finalizado</span>
+    {% endif %}
+  </li>
+  <li><strong>Estudiantes inscritos:</strong> {{ inscripciones|length }}</li>
+</ul>
 
 {% if inscripciones %}
   <table border="1" cellpadding="5" cellspacing="0">
@@ -11,6 +28,7 @@
         <th>Email</th>
         <th>Estado</th>
         <th>Nota Final</th>
+        <th>Asistencia total</th>
       </tr>
     </thead>
     <tbody>
@@ -20,6 +38,7 @@
           <td>{{ ins.usuario.email }}</td>
           <td>{{ ins.estado }}</td>
           <td>{{ ins.nota_final|default:"—" }}</td>
+          <td>{{ ins.asistencia_total }}</td>
         </tr>
       {% endfor %}
     </tbody>

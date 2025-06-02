@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Panel de Administración{% endblock %}
+
+{% block content %}
+  <h1>🎛️ Bienvenido, Administrador {{ request.user.get_full_name }}</h1>
+
+  <h2>🔧 Gestión del Sistema</h2>
+  <ul>
+    <li><a href="{% url 'usuario_list' %}">👥 Gestionar Usuarios</a></li>
+    <li><a href="{% url 'curso_list' %}">📚 Gestionar Cursos</a></li>
+    <li><a href="{% url 'inscripcion_list' %}">📝 Gestionar Inscripciones</a></li>
+    <li><a href="{% url 'categoria_list' %}">🏷️ Gestionar Categorías</a></li>
+    <li><a href="{% url 'reporte_docente' %}">📊 Ver Reportes Docentes</a></li>
+  </ul>
+
+  <p><a href="{% url 'logout' %}">🚪 Cerrar sesión</a></p>
+{% endblock %}

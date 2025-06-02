@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Curso, Inscripcion, Rol, Perfil
+from .models import Curso, Inscripcion, Rol, Perfil, CategoriaCurso
 
 
 class UserPerfilForm(forms.ModelForm):
@@ -50,6 +50,10 @@ class CursoForm(forms.ModelForm):
             raise ValidationError("La fecha de fin no puede ser anterior a la de inicio")
         return cleaned
 
+class CategoriaCursoForm(forms.ModelForm):
+    class Meta:
+        model = CategoriaCurso
+        fields = ['nombre']
 
 class InscripcionForm(forms.ModelForm):
     class Meta:
