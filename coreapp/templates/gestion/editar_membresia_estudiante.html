@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Editar Membresía{% endblock %}
+
+{% block content %}
+  <h1>💳 Editar Membresía de {{ object.user.get_full_name }}</h1>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">💾 Guardar</button>
+  </form>
+
+  <p><a href="{% url 'usuario_list' %}">← Volver al listado de usuarios</a></p>
+{% endblock %}

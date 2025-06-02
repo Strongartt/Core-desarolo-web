@@ -25,7 +25,10 @@ from .views import (
     CategoriaDeleteView,
     GestionAdminView,
     CategoriaListView,
-    CategoriaCreateView  
+    CategoriaCreateView,
+    SeleccionarMembresiaView,
+    EditarMembresiaEstudianteView,
+
 )
 
 urlpatterns = [
@@ -74,6 +77,10 @@ urlpatterns = [
 
     
     path('admin-panel/', GestionAdminView.as_view(), name='gestion_admin'),
+    
+    path('seleccionar-membresia/', SeleccionarMembresiaView.as_view(), name='seleccionar_membresia'),
 
+    path('usuarios/<int:pk>/editar-membresia/', EditarMembresiaEstudianteView.as_view(), name='editar_membresia_estudiante'),
 
 ]
+

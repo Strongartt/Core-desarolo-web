@@ -13,13 +13,24 @@
     <li><a href="{% url 'curso_new' %}">➕ Crear Nuevo Curso</a></li>
     <li><a href="{% url 'reporte_docente' %}">📊 Ver Reporte Personal</a></li>
     <li><a href="{% url 'solicitudes_baja' %}">📩 Revisar Solicitudes de Baja</a></li>
+    
   </ul>
 
 {% elif user.perfil.rol.codigo == 'EST' %}
+  <p>
+    <strong>Plan actual:</strong>
+    {% if user.perfil.membresia_activa %}
+      {{ user.perfil.plan_membresia.nombre }} (vigente hasta {{ user.perfil.fecha_fin_membresia }})
+    {% else %}
+      Gratuita (membresía vencida o no activa)
+    {% endif %}
+  </p>
   <h2>🎓 Mis Cursos</h2>
   <ul>
     <li><a href="{% url 'curso_list' %}">📚 Explorar Todos los Cursos</a></li>
     <li><a href="{% url 'reporte_estudiante' %}">📝 Mi Progreso</a></li>
+    <li><a href="{% url 'seleccionar_membresia' %}">💳 Cambiar mi Membresía</a></li>
+
   </ul>
 
 {% endif %}

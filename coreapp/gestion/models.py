@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 # ----- ROLES Y PERFIL -----
 
@@ -12,12 +13,30 @@ class Rol(models.Model):
     def __str__(self):
         return self.nombre
 
+from django.utils import timezone
+from datetime import date
+
 class Perfil(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     rol = models.ForeignKey(Rol, on_delete=models.CASCADE)
+    plan_membresia = models.ForeignKey('PlanMembresia', on_delete=models.SET_NULL, null=True, blank=True)
+    fecha_inicio_membresia = models.DateField(null=True, blank=True)
+    fecha_fin_membresia = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f'{self.user.get_full_name()} ({self.rol.codigo})'
+
+    def membresia_activa(self):
+        hoy = timezone.now().date()
+        if self.plan_membresia and self.fecha_fin_membresia:
+            return hoy <= self.fecha_fin_membresia
+        return False
+
+    def get_plan_actual(self):
+        if self.membresia_activa():
+            return self.plan_membresia
+        # Si venció, se considera como plan gratuito
+        return PlanMembresia.objects.filter(nombre__iexact="Gratuita").first()
 
 
 # ----- CURSO -----
@@ -44,6 +63,10 @@ class Curso(models.Model):
 
     def __str__(self):
         return self.nombre
+    @property
+    def cupos_disponibles(self):
+        return self.cupo - self.inscripcion_set.count()
+
 
 
 # ----- INSCRIPCION -----
@@ -116,3 +139,11 @@ def crear_perfil_automatico(sender, instance, created, **kwargs):
             Perfil.objects.create(user=instance, rol=rol_defecto)
             
 
+class PlanMembresia(models.Model):
+    nombre = models.CharField(max_length=50, unique=True)  # Ej: Gratuita, Básica, Premium
+    descripcion = models.TextField()
+    precio = models.DecimalField(max_digits=6, decimal_places=2)  # Precio mensual
+    limite_precio_curso = models.DecimalField(max_digits=6, decimal_places=2)  # Máximo curso accesible
+
+    def __str__(self):
+        return f"{self.nombre} (${self.precio}) - Hasta cursos de ${self.limite_precio_curso}"

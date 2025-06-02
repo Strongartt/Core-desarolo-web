@@ -3,14 +3,16 @@ from django.contrib.auth.models import User
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, TemplateView, DeleteView
-from .models import Curso, Inscripcion, CategoriaCurso
-from .forms import CursoForm, InscripcionForm, SignUpForm,UserPerfilForm, CategoriaCursoForm
+from .models import Curso, Inscripcion, CategoriaCurso, Perfil
+from .forms import CursoForm, InscripcionForm, SignUpForm,UserPerfilForm, CategoriaCursoForm, SeleccionarMembresiaForm, ActualizarMembresiaUsuarioForm
 from django.shortcuts import redirect
 from django.contrib.auth.views import LoginView
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.views import View
 from django.utils import timezone
+from datetime import timedelta
+
 
 
 class AdministradorRolRequiredMixin(UserPassesTestMixin):
@@ -26,7 +28,12 @@ class AdministradorRolRequiredMixin(UserPassesTestMixin):
 class AdminODocenteRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         user = self.request.user
-        return user.is_authenticated and hasattr(user, 'perfil') and user.perfil.rol.codigo in ['ADMIN', 'DOC']
+        return user.is_superuser or (
+            user.is_authenticated and 
+            hasattr(user, 'perfil') and 
+            user.perfil.rol.codigo in ['ADMIN', 'DOC']
+        )
+
 
 class UsuarioListView(LoginRequiredMixin, AdministradorRolRequiredMixin, ListView):
     model = User
@@ -124,16 +131,33 @@ class InscribirseView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def post(self, request, curso_id):
         curso = get_object_or_404(Curso, pk=curso_id)
+        usuario = request.user
+        perfil = usuario.perfil
 
-        ya_inscrito = Inscripcion.objects.filter(curso=curso, usuario=request.user).exists()
-        if ya_inscrito:
+        # Evitar duplicados
+        if Inscripcion.objects.filter(curso=curso, usuario=usuario).exists():
             messages.error(request, "Ya estás inscrito en este curso.")
-        elif Inscripcion.objects.filter(curso=curso).count() >= curso.cupo:
-            messages.error(request, "El curso ya no tiene cupos disponibles.")
-        else:
-            Inscripcion.objects.create(curso=curso, usuario=request.user, estado="INSCRITO")
-            messages.success(request, "Te has inscrito correctamente.")
+            return redirect('curso_list')
 
+        # Validar cupo
+        if Inscripcion.objects.filter(curso=curso).count() >= curso.cupo:
+            messages.error(request, "El curso ya no tiene cupos disponibles.")
+            return redirect('curso_list')
+
+        # Obtener plan actual (considerando si expiró)
+        plan = perfil.get_plan_actual()
+
+        if curso.precio > plan.limite_precio_curso:
+            messages.error(
+                request,
+                f"Tu plan actual (‘{plan.nombre}’) solo permite cursos de hasta ${plan.limite_precio_curso}. "
+                f"Este curso cuesta ${curso.precio}."
+            )
+            return redirect('curso_list')
+
+        # Inscripción exitosa
+        Inscripcion.objects.create(curso=curso, usuario=usuario, estado="INSCRITO")
+        messages.success(request, "Te has inscrito correctamente.")
         return redirect('curso_list')
 
 
@@ -309,7 +333,7 @@ class CustomLoginView(LoginView):
             return reverse_lazy('gestion_admin')
         perfil = getattr(user, 'perfil', None)
         if perfil and perfil.rol.codigo == 'DOC':
-            return reverse_lazy('curso_list')
+            return reverse_lazy('dashboard')
         return reverse_lazy('dashboard')
 
 
@@ -384,3 +408,38 @@ class CategoriaListView(LoginRequiredMixin, AdministradorRolRequiredMixin, ListV
     model = CategoriaCurso
     template_name = 'gestion/categoria_list.html'
     context_object_name = 'categorias'
+    
+class SeleccionarMembresiaView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Perfil
+    form_class = SeleccionarMembresiaForm
+    template_name = 'gestion/seleccionar_membresia.html'
+    success_url = reverse_lazy('dashboard')
+
+    def get_object(self):
+        return self.request.user.perfil
+
+    def form_valid(self, form):
+        perfil = form.save(commit=False)
+        plan = form.cleaned_data['plan_membresia']
+
+        hoy = timezone.now().date()
+        perfil.plan_membresia = plan
+        perfil.fecha_inicio_membresia = hoy
+        perfil.fecha_fin_membresia = hoy + timedelta(days=30)
+
+        perfil.save()
+        messages.success(self.request, f"Tu membresía '{plan.nombre}' está activa hasta el {perfil.fecha_fin_membresia}.")
+        return super().form_valid(form)
+
+    def test_func(self):
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'EST'
+    
+class EditarMembresiaEstudianteView(LoginRequiredMixin, AdministradorRolRequiredMixin, UpdateView):
+    model = Perfil
+    form_class = ActualizarMembresiaUsuarioForm
+    template_name = 'gestion/editar_membresia_estudiante.html'
+    success_url = reverse_lazy('usuario_list')
+
+    def get_queryset(self):
+        return Perfil.objects.filter(rol__codigo='EST')
+

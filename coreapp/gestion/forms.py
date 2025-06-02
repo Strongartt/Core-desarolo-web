@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Curso, Inscripcion, Rol, Perfil, CategoriaCurso
+from .models import Curso, Inscripcion, Rol, Perfil, CategoriaCurso, PlanMembresia
 
 
 class UserPerfilForm(forms.ModelForm):
@@ -26,29 +26,26 @@ class UserPerfilForm(forms.ModelForm):
 class CursoForm(forms.ModelForm):
     class Meta:
         model = Curso
-        fields = ['nombre', 'modalidad', 'fecha_inicio', 'fecha_fin', 'cupo']
+        fields = ['nombre', 'modalidad', 'fecha_inicio', 'fecha_fin', 'cupo', 'categoria', 'precio']
         widgets = {
             'fecha_inicio': forms.DateInput(attrs={'type': 'date'}),
-            'fecha_fin':    forms.DateInput(attrs={'type': 'date'}),
-            'docente':      forms.Select(),
+            'fecha_fin': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def clean(self):
         cleaned = super().clean()
         fi = cleaned.get('fecha_inicio')
         ff = cleaned.get('fecha_fin')
+        precio = cleaned.get('precio')
+
         if fi and ff and ff < fi:
             raise ValidationError("La fecha de fin no puede ser anterior a la de inicio")
+
+        if precio is not None and precio > 50:
+            raise ValidationError("El precio del curso no puede ser mayor a $50")
+
         return cleaned
 
-
-    def clean(self):
-        cleaned = super().clean()
-        fi = cleaned.get('fecha_inicio')
-        ff = cleaned.get('fecha_fin')
-        if fi and ff and ff < fi:
-            raise ValidationError("La fecha de fin no puede ser anterior a la de inicio")
-        return cleaned
 
 class CategoriaCursoForm(forms.ModelForm):
     class Meta:
@@ -148,3 +145,25 @@ class SignUpForm(UserCreationForm):
             perfil.rol = self.cleaned_data["rol"]
             perfil.save()
         return user
+
+class SeleccionarMembresiaForm(forms.ModelForm):
+    class Meta:
+        model = Perfil
+        fields = ['plan_membresia']
+        labels = {
+            'plan_membresia': 'Selecciona tu plan de membresía'
+        }
+        
+class ActualizarMembresiaUsuarioForm(forms.ModelForm):
+    class Meta:
+        model = Perfil
+        fields = ['plan_membresia', 'fecha_inicio_membresia', 'fecha_fin_membresia']
+        labels = {
+            'plan_membresia': 'Membresía Asignada',
+            'fecha_inicio_membresia': 'Fecha de inicio',
+            'fecha_fin_membresia': 'Fecha de finalización'
+        }
+        widgets = {
+            'fecha_inicio_membresia': forms.DateInput(attrs={'type': 'date'}),
+            'fecha_fin_membresia': forms.DateInput(attrs={'type': 'date'}),
+        }        

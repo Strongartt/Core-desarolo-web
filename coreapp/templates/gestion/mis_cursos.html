@@ -3,10 +3,17 @@
 {% block content %}
 <h1>Mis Cursos</h1>
 <p><a href="{% url 'curso_new' %}">+ Crear Nuevo Curso</a></p>
-
 <table border="1">
   <thead>
-    <tr><th>Nombre</th><th>Modalidad</th><th>Fechas</th><th>Cupo</th><th>Acciones</th></tr>
+    <tr>
+      <th>Nombre</th>
+      <th>Modalidad</th>
+      <th>Fechas</th>
+      <th>Categoría</th>
+      <th>Precio</th>
+      <th>Cupo disponible</th>
+      <th>Acciones</th>
+    </tr>
   </thead>
   <tbody>
     {% for c in cursos %}
@@ -14,11 +21,13 @@
         <td>{{ c.nombre }}</td>
         <td>{{ c.modalidad }}</td>
         <td>{{ c.fecha_inicio }} a {{ c.fecha_fin }}</td>
-        <td>{{ c.cupo }}</td>
+        <td>{{ c.categoria.nombre }}</td>
+        <td>${{ c.precio }}</td>
+        <td>{{ c.cupos_disponibles }}</td>
         <td><a href="{% url 'curso_edit' c.pk %}">Editar</a></td>
       </tr>
     {% empty %}
-      <tr><td colspan="5">No has creado cursos todavía.</td></tr>
+      <tr><td colspan="7">No has creado cursos todavía.</td></tr>
     {% endfor %}
   </tbody>
 </table>
