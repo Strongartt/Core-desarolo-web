@@ -544,3 +544,30 @@ class ReporteGananciasMensualesView(LoginRequiredMixin, UserPassesTestMixin, Tem
 
         ctx['datos'] = datos
         return ctx
+    
+class ReporteTopEstudiantesPorCategoriaView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'gestion/reporte_top_estudiantes_categoria.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser  # Solo admins pueden acceder
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        categorias = CategoriaCurso.objects.all()
+        reporte = []
+
+        for categoria in categorias:
+            cursos = Curso.objects.filter(categoria=categoria)
+            inscripciones = Inscripcion.objects.filter(curso__in=cursos, nota_final__isnull=False).select_related('usuario')
+            top = sorted(inscripciones, key=lambda i: i.nota_final, reverse=True)[:3]
+            reporte.append({
+                'categoria': categoria.nombre,
+                'top_estudiantes': [{
+                    'nombre': f'{i.usuario.first_name} {i.usuario.last_name}',
+                    'curso': i.curso.nombre,
+                    'nota': i.nota_final
+                } for i in top]
+            })
+
+        ctx['reporte'] = reporte
+        return ctx

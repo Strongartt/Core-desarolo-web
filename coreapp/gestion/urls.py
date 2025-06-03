@@ -31,6 +31,7 @@ from .views import (
     ReporteIngresosCursoView,
     ReporteIngresosCategoriaView,
     ReporteGananciasMensualesView,
+    ReporteTopEstudiantesPorCategoriaView,
 
 )
 
@@ -92,6 +93,8 @@ urlpatterns = [
     path('reporte/ingresos-categoria/', ReporteIngresosCategoriaView.as_view(), name='reporte_ingresos_categoria'),
 
     path('reporte/ganancias-mensuales/', ReporteGananciasMensualesView.as_view(), name='reporte_ganancias_mensuales'),
+
+    path('reporte/top-estudiantes/', ReporteTopEstudiantesPorCategoriaView.as_view(), name='reporte_top_estudiantes_categoria'),
 
 ]
 

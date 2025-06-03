@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Top 3 Estudiantes por Categoría{% endblock %}
+
+{% block content %}
+  <h1>🏆 Top 3 Estudiantes por Categoría</h1>
+
+  {% for item in reporte %}
+    <h3>📚 {{ item.categoria }}</h3>
+    {% if item.top_estudiantes %}
+      <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Estudiante</th>
+            <th>Curso</th>
+            <th>Nota Final</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for est in item.top_estudiantes %}
+            <tr>
+              <td>{{ est.nombre }}</td>
+              <td>{{ est.curso }}</td>
+              <td>{{ est.nota }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No hay datos disponibles.</p>
+    {% endif %}
+  {% endfor %}
+
+  <p><a href="{% url 'gestion_admin' %}">← Volver al Panel Admin</a></p>
+{% endblock %}
