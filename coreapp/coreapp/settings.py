@@ -14,7 +14,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "127.0.0.1",            # para local
     "localhost",            # para local
-    "core-desarolo-web.onrender.com",  # tu dominio de Render
+    "https://mini-core-django.onrender.com",  # tu dominio de Render
 ]
 
 # Aplicaciones instaladas
