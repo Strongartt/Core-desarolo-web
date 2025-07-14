@@ -15,7 +15,8 @@ from datetime import timedelta
 from django.db.models import Count, Sum, F, FloatField, ExpressionWrapper
 from django.db.models.functions import TruncMonth
 from .services.inscripcion_service import procesar_inscripcion, actualizar_notas_asistencia
-
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
 
 
 
@@ -527,3 +528,8 @@ class ReporteTopEstudiantesPorCategoriaView(LoginRequiredMixin, UserPassesTestMi
 
         ctx['reporte'] = reporte
         return ctx
+
+@login_required
+def vista_filtrado_cursos_api(request):
+    categorias = CategoriaCurso.objects.all()
+    return render(request, 'gestion/cursos_api_view.html', {'categorias': categorias})

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2 class="mb-3">Filtrar Cursos</h2>
+
+    <form id="filtroForm" class="row g-3">
+        <div class="col-md-4">
+            <label for="categoria" class="form-label">Categoría</label>
+            <select id="categoria" class="form-select">
+                <option value="">Todas</option>
+                {% for cat in categorias %}
+                    <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label for="modalidad" class="form-label">Modalidad</label>
+            <select id="modalidad" class="form-select">
+                <option value="">Todas</option>
+                <option value="Presencial">Presencial</option>
+                <option value="En línea">En línea</option>
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label for="membresia" class="form-label">Membresía</label>
+            <select id="membresia" class="form-select">
+                <option value="">Todas</option>
+                <option value="Gratuita">Gratuita</option>
+                <option value="Básica">Básica</option>
+                <option value="Premium">Premium</option>
+            </select>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+        </div>
+    </form>
+
+    <hr>
+
+    <div id="resultadoCursos" class="mt-4">
+        <h4>Resultados:</h4>
+        <div id="cursosContainer" class="row"></div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $('#filtroForm').on('submit', function (e) {
+        e.preventDefault();
+
+        const categoria = $('#categoria').val();
+        const modalidad = $('#modalidad').val();
+        const membresia = $('#membresia').val();
+
+        let url = '/api/cursos/?';
+        if (categoria) url += `categoria=${categoria}&`;
+        if (modalidad) url += `modalidad=${modalidad}&`;
+        if (membresia) url += `membresia=${membresia}&`;
+
+        $.get(url, function (data) {
+            $('#cursosContainer').empty();
+            if (data.length === 0) {
+                $('#cursosContainer').append('<p>No se encontraron cursos con esos filtros.</p>');
+                return;
+            }
+
+            data.forEach(curso => {
+                $('#cursosContainer').append(`
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">${curso.nombre}</h5>
+                                <p class="card-text">
+                                    Modalidad: ${curso.modalidad}<br>
+                                    Precio: $${curso.precio}<br>
+                                    Membresía requerida: ${curso.membresia_requerida}<br>
+                                    Categoría: ${curso.categoria_nombre}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            });
+        });
+    });
+</script>
+{% endblock %}

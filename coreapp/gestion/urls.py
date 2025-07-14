@@ -1,4 +1,5 @@
 from django.urls import path
+from .api.curso_api import cursos_api
 from .views import (
     UsuarioListView, 
     UsuarioCreateView, 
@@ -32,7 +33,7 @@ from .views import (
     ReporteIngresosCategoriaView,
     ReporteGananciasMensualesView,
     ReporteTopEstudiantesPorCategoriaView,
-
+    vista_filtrado_cursos_api,
 )
 
 urlpatterns = [
@@ -95,6 +96,10 @@ urlpatterns = [
     path('reporte/ganancias-mensuales/', ReporteGananciasMensualesView.as_view(), name='reporte_ganancias_mensuales'),
 
     path('reporte/top-estudiantes/', ReporteTopEstudiantesPorCategoriaView.as_view(), name='reporte_top_estudiantes_categoria'),
+    
+    #API Cursos
+    path('api/cursos/', cursos_api, name='api-cursos'),
+    path('cursos/filtrar-api/', vista_filtrado_cursos_api, name='cursos-filtrados-api'),
 
 ]
 
