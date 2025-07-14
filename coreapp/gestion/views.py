@@ -14,7 +14,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Sum, F, FloatField, ExpressionWrapper
 from django.db.models.functions import TruncMonth
-from .services import procesar_inscripcion, actualizar_notas_asistencia
+from .services.inscripcion_service import procesar_inscripcion, actualizar_notas_asistencia
+
 
 
 

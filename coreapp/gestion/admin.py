@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Rol, Curso, Inscripcion
+from .models import Rol, Curso, Inscripcion, CategoriaCurso, PlanMembresia
 
 @admin.register(Rol)
 class RolAdmin(admin.ModelAdmin):
@@ -13,3 +13,11 @@ class CursoAdmin(admin.ModelAdmin):
 class InscripcionAdmin(admin.ModelAdmin):
     list_display = ('usuario','curso','fecha_inscripcion','estado')
     list_filter  = ('estado',)
+
+@admin.register(CategoriaCurso)
+class CategoriaCursoAdmin(admin.ModelAdmin):
+    list_display = ('nombre',)
+    
+@admin.register(PlanMembresia)
+class PlanMembresiaAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'limite_precio_curso')
