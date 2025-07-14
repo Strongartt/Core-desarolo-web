@@ -14,6 +14,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Sum, F, FloatField, ExpressionWrapper
 from django.db.models.functions import TruncMonth
+from .services import procesar_inscripcion, actualizar_notas_asistencia
 
 
 
@@ -136,33 +137,7 @@ class InscribirseView(LoginRequiredMixin, UserPassesTestMixin, View):
     def post(self, request, curso_id):
         curso = get_object_or_404(Curso, pk=curso_id)
         usuario = request.user
-        perfil = usuario.perfil
-
-        # Evitar duplicados
-        if Inscripcion.objects.filter(curso=curso, usuario=usuario).exists():
-            messages.error(request, "Ya estás inscrito en este curso.")
-            return redirect('curso_list')
-
-        # Validar cupo
-        if Inscripcion.objects.filter(curso=curso).count() >= curso.cupo:
-            messages.error(request, "El curso ya no tiene cupos disponibles.")
-            return redirect('curso_list')
-
-        # Obtener plan actual (considerando si expiró)
-        plan = perfil.get_plan_actual()
-
-        if curso.precio > plan.limite_precio_curso:
-            messages.error(
-                request,
-                f"Tu plan actual (‘{plan.nombre}’) solo permite cursos de hasta ${plan.limite_precio_curso}. "
-                f"Este curso cuesta ${curso.precio}."
-            )
-            return redirect('curso_list')
-
-        # Inscripción exitosa
-        Inscripcion.objects.create(curso=curso, usuario=usuario, estado="INSCRITO")
-        messages.success(request, "Te has inscrito correctamente.")
-        return redirect('curso_list')
+        return procesar_inscripcion(request, curso, usuario)
 
 
 # —— Registro de nuevos usuarios “normales” ——
@@ -276,7 +251,7 @@ class DetalleCursoDocenteView(LoginRequiredMixin, UserPassesTestMixin, TemplateV
 
     def test_func(self):
         user = self.request.user
-        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOS'
+        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOC'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -297,7 +272,7 @@ class GestionSolicitudesBajaView(LoginRequiredMixin, UserPassesTestMixin, Templa
     template_name = 'gestion/solicitudes_baja_docente.html'
 
     def test_func(self):
-        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOS'
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOC'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -312,7 +287,7 @@ class GestionSolicitudesBajaView(LoginRequiredMixin, UserPassesTestMixin, Templa
    
 class AprobarBajaView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
-        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOS'
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOC'
 
     def post(self, request, pk):
         ins = get_object_or_404(Inscripcion, id=pk, curso__docente=request.user.perfil)
@@ -325,7 +300,7 @@ class AprobarBajaView(LoginRequiredMixin, UserPassesTestMixin, View):
 
 class RechazarBajaView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
-        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOS'
+        return hasattr(self.request.user, 'perfil') and self.request.user.perfil.rol.codigo == 'DOC'
 
     def post(self, request, pk):
         ins = get_object_or_404(Inscripcion, id=pk, curso__docente=request.user.perfil)
@@ -354,7 +329,7 @@ class EditarNotasAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Templat
 
     def test_func(self):
         user = self.request.user
-        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOS'
+        return hasattr(user, 'perfil') and user.perfil.rol.codigo == 'DOC'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -371,27 +346,7 @@ class EditarNotasAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Templat
     def post(self, request, *args, **kwargs):
         perfil = request.user.perfil
         curso_id = self.kwargs.get('pk')
-        curso = get_object_or_404(Curso, id=curso_id, docente=perfil)
-
-        for inscripcion in Inscripcion.objects.filter(curso=curso):
-            nota_key = f'nota_{inscripcion.id}'
-            asistencia_key = f'asistencia_{inscripcion.id}'
-
-            try:
-                nota = request.POST.get(nota_key)
-                asistencia = request.POST.get(asistencia_key)
-
-                if nota:
-                    inscripcion.nota_final = float(nota)
-                if asistencia:
-                    inscripcion.asistencia_total = int(asistencia)
-
-                inscripcion.save()
-            except ValueError:
-                pass  # Puedes agregar mensajes si deseas manejar errores específicos
-
-        messages.success(request, "Notas y asistencia actualizadas.")
-        return redirect('editar_notas_asistencia', pk=curso.id)
+        return actualizar_notas_asistencia(request, curso_id, perfil)
     
 class CategoriaCreateView(LoginRequiredMixin, AdministradorRolRequiredMixin, CreateView):
     model = CategoriaCurso
