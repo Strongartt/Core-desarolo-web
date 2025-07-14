@@ -3,18 +3,16 @@
 from pathlib import Path
 import dj_database_url
 
-# Si usas python-dotenv, descomenta estas dos líneas:
-# from dotenv import load_dotenv
-# load_dotenv()
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure--xuu@yrcudj$@$_gpm&jx@!*oe&s!p$nfm0e$bbm)4guoq8s7*'
 DEBUG = True
 ALLOWED_HOSTS = [
-    "127.0.0.1",            # para local
-    "localhost",            # para local
-    "core-desarolo-web.onrender.com",  # tu dominio de Render
+    "127.0.0.1",            
+    "localhost",            
+    "core-desarolo-web.onrender.com",  
 ]
 
 # Aplicaciones instaladas
@@ -61,13 +59,14 @@ WSGI_APPLICATION = 'coreapp.wsgi.application'
 
 # Base de datos (PostgreSQL en Render)
 DATABASES = {
-    'default': dj_database_url.parse(
-        'postgresql://postgresql_django_syv1_user:fkxXPwAwvYk8rYwCwy1HA7p3NQn07YW0@'
-        'dpg-d0d6gpadbo4c73duc1tg-a.oregon-postgres.render.com/'
-        'postgresql_django_syv1',
-        conn_max_age=600,
-        ssl_require=True
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'core_database_xhzz',
+        'USER': 'core_database_xhzz_user',
+        'PASSWORD': 'MDICzBg3UJ1pamkLYasbftXZ3TpIxYXY',
+        'HOST': 'dpg-d1qhnqre5dus73e988o0-a.oregon-postgres.render.com',
+        'PORT': '5432',
+    }
 }
 
 # Validadores de contraseña
