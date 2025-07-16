@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Reporte: Inscripciones por Trimestre (con Filtros)</h2>
+
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <label>Categoría:</label>
+        <select name="categoria" class="form-control">
+            <option value="">Todas</option>
+            {% for cat in categorias %}
+                <option value="{{ cat.id }}" {% if filtros.categoria == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label>Modalidad:</label>
+        <select name="modalidad" class="form-control">
+            <option value="">Todas</option>
+            <option value="PRESENCIAL" {% if filtros.modalidad == "PRESENCIAL" %}selected{% endif %}>Presencial</option>
+            <option value="ONLINE" {% if filtros.modalidad == "ONLINE" %}selected{% endif %}>En línea</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label>Membresía:</label>
+        <select name="membresia" class="form-control">
+            <option value="">Todas</option>
+            <option value="Gratuita" {% if filtros.membresia == "Gratuita" %}selected{% endif %}>Gratuita</option>
+            <option value="Básica" {% if filtros.membresia == "Básica" %}selected{% endif %}>Básica</option>
+            <option value="Premium" {% if filtros.membresia == "Premium" %}selected{% endif %}>Premium</option>
+        </select>
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+    </div>
+</form>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Trimestre</th>
+            <th>Inscripciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in resultados %}
+        <tr>
+            <td>{{ item.nombre }}</td>
+            <td>{{ item.inscripciones }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="table-warning">
+            <td><strong>Proyección siguiente trimestre</strong></td>
+            <td><strong>{{ proyeccion }}</strong></td>
+        </tr>
+    </tbody>
+</table>
+
+{% if recomendacion %}
+<div class="alert alert-info mt-4">
+    <strong>📌 Recomendación:</strong> {{ recomendacion }}
+</div>
+{% endif %}
+
+{% endblock %}

@@ -71,6 +71,8 @@ MODALIDADES = [
 class Curso(models.Model):
     nombre = models.CharField(max_length=100)
     modalidad = models.CharField(max_length=20, choices=MODALIDADES)
+    trimestre = models.ForeignKey('Trimestre', on_delete=models.SET_NULL, null=True, blank=True)
+
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
     cupo = models.PositiveIntegerField()
@@ -176,3 +178,11 @@ class PlanMembresia(models.Model):
 
     def __str__(self):
         return f"{self.nombre} (${self.precio}) - Hasta cursos de ${self.limite_precio_curso}"
+   
+class Trimestre(models.Model):
+    nombre = models.CharField(max_length=20, unique=True)
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+
+    def __str__(self):
+        return self.nombre    

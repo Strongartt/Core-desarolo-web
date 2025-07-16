@@ -34,6 +34,7 @@ from .views import (
     ReporteGananciasMensualesView,
     ReporteTopEstudiantesPorCategoriaView,
     vista_filtrado_cursos_api,
+    ReporteInscripcionesPorTrimestreView,
 )
 
 urlpatterns = [
@@ -100,6 +101,9 @@ urlpatterns = [
     #API Cursos
     path('api/cursos/', cursos_api, name='api-cursos'),
     path('cursos/filtrar-api/', vista_filtrado_cursos_api, name='cursos-filtrados-api'),
+
+    path('reportes/inscripciones-por-trimestre/', ReporteInscripcionesPorTrimestreView.as_view(), name='reporte_inscripciones_trimestre'),
+
 
 ]
 

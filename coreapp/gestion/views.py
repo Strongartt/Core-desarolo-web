@@ -1,9 +1,10 @@
 # gestion/views.py
+from urllib import request
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, TemplateView, DeleteView
-from .models import Curso, Inscripcion, CategoriaCurso, Perfil
+from .models import Curso, Inscripcion, CategoriaCurso, Perfil, Trimestre
 from .forms import CursoForm, InscripcionForm, SignUpForm,UserPerfilForm, CategoriaCursoForm, SeleccionarMembresiaForm, ActualizarMembresiaUsuarioForm
 from django.shortcuts import redirect
 from django.contrib.auth.views import LoginView
@@ -17,7 +18,8 @@ from django.db.models.functions import TruncMonth
 from .services.inscripcion_service import procesar_inscripcion, actualizar_notas_asistencia
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-
+from collections import Counter
+from datetime import date
 
 
 
@@ -472,35 +474,7 @@ class ReporteIngresosCategoriaView(LoginRequiredMixin, UserPassesTestMixin, Temp
         ctx['datos'] = datos
         return ctx
 
-class ReporteGananciasMensualesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    template_name = 'gestion/reporte_ganancias_mensuales.html'
 
-    def test_func(self):
-        return self.request.user.is_superuser
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-
-        datos = (
-            Inscripcion.objects
-            .annotate(mes=TruncMonth('fecha_inscripcion'))
-            .values('mes')
-            .annotate(
-                total_inscripciones=Count('id'),
-                total_ganado=Sum(ExpressionWrapper(
-                    F('curso__precio'),
-                    output_field=FloatField()
-                ))
-            )
-            .order_by('mes')
-        )
-
-        # Redondear los ingresos
-        for d in datos:
-            d['total_ganado'] = round(d['total_ganado'] or 0, 2)
-
-        ctx['datos'] = datos
-        return ctx
     
 class ReporteTopEstudiantesPorCategoriaView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'gestion/reporte_top_estudiantes_categoria.html'
@@ -533,3 +507,116 @@ class ReporteTopEstudiantesPorCategoriaView(LoginRequiredMixin, UserPassesTestMi
 def vista_filtrado_cursos_api(request):
     categorias = CategoriaCurso.objects.all()
     return render(request, 'gestion/cursos_api_view.html', {'categorias': categorias})
+
+
+
+class ReporteInscripcionesPorTrimestreView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'gestion/reporte_inscripciones_trimestre.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser  
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+    
+        categoria_id = self.request.GET.get('categoria')
+        modalidad = self.request.GET.get('modalidad')
+        membresia = self.request.GET.get('membresia')
+
+        cursos = Curso.objects.all()
+
+        if categoria_id:
+            cursos = cursos.filter(categoria_id=categoria_id)
+        if modalidad:
+            cursos = cursos.filter(modalidad=modalidad)
+        if membresia:
+            cursos = [c for c in cursos if c.membresia_requerida == membresia]
+
+        anio_actual = date.today().year
+        anio_anterior = anio_actual - 1
+        trimestres = Trimestre.objects.filter(fecha_inicio__year=anio_anterior).order_by('fecha_inicio')
+
+        resultados = []
+
+        for trimestre in trimestres:
+            cursos_en_trimestre = [c for c in cursos if c.trimestre_id == trimestre.id]
+            inscripciones = Inscripcion.objects.filter(curso__in=cursos_en_trimestre).count()
+            resultados.append({
+                'nombre': trimestre.nombre,
+                'inscripciones': inscripciones
+            })
+
+        # Proyección solo con trimestres que tienen inscripciones
+        trimestres_con_inscripciones = [r for r in resultados if r['inscripciones'] > 0]
+        ultimos = trimestres_con_inscripciones[-3:] if len(trimestres_con_inscripciones) >= 3 else trimestres_con_inscripciones
+        proyeccion = round(sum(r['inscripciones'] for r in ultimos) / len(ultimos)) if ultimos else 0
+
+        # Recomendación inteligente
+        inscripciones_validas = Inscripcion.objects.select_related('curso', 'curso__categoria').filter(curso__in=cursos)
+        categoria_counter = Counter()
+        modalidad_counter = Counter()
+
+        for i in inscripciones_validas:
+            if i.curso.categoria:
+                categoria_counter[i.curso.categoria.nombre] += 1
+            modalidad_counter[i.curso.modalidad] += 1
+
+        categoria_top = categoria_counter.most_common(1)[0][0] if categoria_counter else "desconocida"
+        modalidad_top = modalidad_counter.most_common(1)[0][0] if modalidad_counter else "desconocida"
+
+        if trimestres_con_inscripciones:
+            trimestre_max = max(trimestres_con_inscripciones, key=lambda r: r['inscripciones'])
+            index_trimestre = resultados.index(trimestre_max)
+            ordinales = ["primer trimestre", "segundo trimestre", "tercer trimestre"]
+            nombre_trimestre_recomendado = ordinales[index_trimestre] if index_trimestre < len(ordinales) else "trimestre más activo"
+
+            recomendacion = (
+                f"Se recomienda priorizar la creación de cursos en el {nombre_trimestre_recomendado}, "
+                f"preferentemente de la categoría '{categoria_top}' y en modalidad '{modalidad_top}', "
+                f"que han mostrado mayor interés por parte de los estudiantes."
+            )
+        else:
+            recomendacion = "No hay suficientes datos para generar una recomendación."
+
+        ctx['trimestres'] = trimestres
+        ctx['cursos'] = cursos
+        ctx['resultados'] = resultados
+        ctx['proyeccion'] = proyeccion
+        ctx['categorias'] = CategoriaCurso.objects.all()
+        ctx['filtros'] = {
+            'categoria': categoria_id,
+            'modalidad': modalidad,
+            'membresia': membresia
+        }
+        ctx['recomendacion'] = recomendacion
+
+        return ctx
+
+class ReporteGananciasMensualesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'gestion/reporte_ganancias_mensuales.html'
+
+
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        datos = (
+            Inscripcion.objects
+            .annotate(mes=TruncMonth('fecha_inscripcion'))
+            .values('mes')
+            .annotate(
+                total_inscripciones=Count('id'),
+                total_ganado=Sum(ExpressionWrapper(
+                    F('curso__precio'),
+                    output_field=FloatField()
+                ))
+            )
+            .order_by('mes')
+        )
+
+        for d in datos:
+            d['total_ganado'] = round(d['total_ganado'] or 0, 2)
+
+        ctx['datos'] = datos
+        return ctx

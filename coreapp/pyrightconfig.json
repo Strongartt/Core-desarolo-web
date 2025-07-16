@@ -1,0 +1,30 @@
+{
+    "include": [
+        "coreapp"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        "**/migrations",
+        "env"
+    ],
+    "ignore": [
+        "**/migrations/**"
+    ],
+    "reportMissingImports": false,
+    "reportMissingTypeStubs": false,
+    "reportUnusedImport": false,
+    "reportUnusedVariable": false,
+    "pythonVersion": "3.9",
+    "pythonPlatform": "Windows",
+    "executionEnvironments": [
+        {
+            "root": "coreapp",
+            "pythonVersion": "3.9",
+            "pythonPlatform": "Windows",
+            "extraPaths": [
+                "coreapp"
+            ]
+        }
+    ]
+} 

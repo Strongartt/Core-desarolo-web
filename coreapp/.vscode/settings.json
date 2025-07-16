@@ -1,0 +1,36 @@
+{
+    "python.defaultInterpreterPath": "./env/Scripts/python.exe",
+    "python.analysis.extraPaths": ["./coreapp"],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.stubPath": "./typings",
+    "python.analysis.include": [
+        "coreapp/**/*.py"
+    ],
+    "python.analysis.exclude": [
+        "**/migrations/**",
+        "**/__pycache__/**",
+        "**/env/**"
+    ],
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": false,
+    "python.linting.mypyEnabled": true,
+    "python.linting.ruffEnabled": true,
+    "python.linting.ruffArgs": [
+        "--config=pyproject.toml"
+    ],
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none",
+        "reportMissingTypeStubs": "none",
+        "reportUnusedImport": "none"
+    },
+    "files.associations": {
+        "*.py": "python"
+    },
+    "emmet.includeLanguages": {
+        "django-html": "html"
+    }
+} 
